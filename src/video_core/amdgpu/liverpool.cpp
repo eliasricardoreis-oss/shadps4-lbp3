@@ -13,8 +13,8 @@
 #include "core/libraries/kernel/process.h"
 #include "core/libraries/videoout/driver.h"
 #include "core/memory.h"
-#include "core/platform.h"
 #include "core/performance_telemetry.h"
+#include "core/platform.h"
 #include "video_core/amdgpu/fence_detector.h"
 #include "video_core/amdgpu/liverpool.h"
 #include "video_core/amdgpu/pm4_cmds.h"
@@ -1175,8 +1175,8 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
                 if (packet.int_sel == InterruptSelect::DataAfterWriteConfirm &&
                     (packet.data_sel == DataSelect::Data32Low ||
                      packet.data_sel == DataSelect::Data64)) {
-                    const u32 num_bytes = packet.data_sel == DataSelect::Data64 ? sizeof(u64)
-                                                                               : sizeof(u32);
+                    const u32 num_bytes =
+                        packet.data_sel == DataSelect::Data64 ? sizeof(u64) : sizeof(u32);
                     if (rasterizer->ConsumeLbp3NgCpuHlePhase()) {
                         // A wholly CPU-executed NG phase has no native producer submission to
                         // retire. Publish its completion value now; the following WAIT_REG_MEM
@@ -1187,8 +1187,8 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
                             Core::PerfTelemetry::Counter::Lbp3NgCpuHleReleases);
                         break;
                     }
-                    if (rasterizer->WriteGuestFence(
-                            packet.Address<VAddr>(), packet.DataQWord(), num_bytes)) {
+                    if (rasterizer->WriteGuestFence(packet.Address<VAddr>(), packet.DataQWord(),
+                                                    num_bytes)) {
                         break;
                     }
                 }
@@ -1227,8 +1227,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
             }
 
             release_mem->SignalFence(
-                write_guest, signal_irq,
-                [this](VAddr dst, u16 gds_index, u16 num_dwords) {
+                write_guest, signal_irq, [this](VAddr dst, u16 gds_index, u16 num_dwords) {
                     rasterizer->CopyBuffer(dst, gds_index, num_dwords * sizeof(u32), false, true);
                 });
             break;

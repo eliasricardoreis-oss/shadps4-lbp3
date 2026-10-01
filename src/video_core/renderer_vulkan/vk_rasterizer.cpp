@@ -246,13 +246,13 @@ bool Rasterizer::Draw(bool is_indexed, u32 index_offset) {
 
     const auto& regs = liverpool->regs;
     const u64 expanded_quad_index_count = (u64{regs.num_indices} / 4) * 6;
-    const bool quad_candidate =
-        regs.num_indices >= 4 &&
-        regs.primitive_type == AmdGpu::PrimitiveType::QuadList &&
-        regs.stage_enable.raw == AmdGpu::ShaderStageEnable::VgtStages::Vs &&
-        expanded_quad_index_count <= buffer_cache.GetQuadIndexCount();
+    const bool quad_candidate = regs.num_indices >= 4 &&
+                                regs.primitive_type == AmdGpu::PrimitiveType::QuadList &&
+                                regs.stage_enable.raw == AmdGpu::ShaderStageEnable::VgtStages::Vs &&
+                                expanded_quad_index_count <= buffer_cache.GetQuadIndexCount();
     const auto expanded_indices = is_indexed && quad_candidate
-        ? buffer_cache.TryExpandQuadIndices(index_offset) : std::nullopt;
+                                      ? buffer_cache.TryExpandQuadIndices(index_offset)
+                                      : std::nullopt;
     const bool expand_quad_list = quad_candidate && (!is_indexed || expanded_indices.has_value());
     const u32 expanded_index_count =
         expand_quad_list ? static_cast<u32>(expanded_quad_index_count) : 0;
@@ -273,8 +273,8 @@ bool Rasterizer::Draw(bool is_indexed, u32 index_offset) {
 
     buffer_cache.BindVertexBuffers(*pipeline, buffer_barriers);
     if (expanded_indices) {
-        scheduler.CommandBuffer().bindIndexBuffer(expanded_indices->buffer, expanded_indices->offset,
-                                                  expanded_indices->type);
+        scheduler.CommandBuffer().bindIndexBuffer(expanded_indices->buffer,
+                                                  expanded_indices->offset, expanded_indices->type);
     } else if (is_indexed) {
         buffer_cache.BindIndexBuffer(index_offset, buffer_barriers);
     } else if (expand_quad_list) {
@@ -310,15 +310,15 @@ bool Rasterizer::Draw(bool is_indexed, u32 index_offset) {
     if (is_indexed && regs.primitive_type == AmdGpu::PrimitiveType::QuadList) {
         Core::PerfTelemetry::Increment(Core::PerfTelemetry::Counter::IndexedQuadDraws);
         Core::PerfTelemetry::Increment(expanded_indices
-            ? Core::PerfTelemetry::Counter::ExpandedIndexedQuadDraws
-            : Core::PerfTelemetry::Counter::IndexedQuadFallbacks);
+                                           ? Core::PerfTelemetry::Counter::ExpandedIndexedQuadDraws
+                                           : Core::PerfTelemetry::Counter::IndexedQuadFallbacks);
     }
     if (scheduler.IsTimingRenderPass()) {
         const auto stages = pipeline->GetStages();
         const auto* ps = stages[u32(Shader::LogicalStage::Fragment)];
         scheduler.RecordTimedDraw(vs_info.pgm_hash, ps ? ps->pgm_hash : 0,
-            u64{expand_quad_list ? expanded_index_count : regs.num_indices} *
-                regs.num_instances.NumInstances());
+                                  u64{expand_quad_list ? expanded_index_count : regs.num_indices} *
+                                      regs.num_instances.NumInstances());
     }
 
     ResetBindings();
@@ -528,8 +528,7 @@ bool Rasterizer::DeferGuestFence(Common::UniqueFunction<void>&& callback) {
 }
 
 bool Rasterizer::HasPendingGuestFences() const noexcept {
-    return guest_fence_recording_tick != 0 &&
-           scheduler.CurrentTick() == guest_fence_recording_tick;
+    return guest_fence_recording_tick != 0 && scheduler.CurrentTick() == guest_fence_recording_tick;
 }
 
 void Rasterizer::MarkLbp3NgCpuHleDispatch() noexcept {
@@ -1146,8 +1145,8 @@ RenderState Rasterizer::BeginRendering(const GraphicsPipeline* pipeline) {
     if (state.num_layers == std::numeric_limits<u16>::max()) {
         state.num_layers = 1;
     }
-    state.MinimizeAttachmentlessArea(
-        pipeline->GetStages()[u32(Shader::LogicalStage::Fragment)] != nullptr);
+    state.MinimizeAttachmentlessArea(pipeline->GetStages()[u32(Shader::LogicalStage::Fragment)] !=
+                                     nullptr);
 
     return state;
 }
@@ -1249,8 +1248,7 @@ bool Rasterizer::InvalidateMemory(VAddr addr, u64 size) {
         return false;
     }
     Core::PerfTelemetry::Increment(Core::PerfTelemetry::Counter::GuestWriteFaults);
-    Core::PerfTelemetry::ScopedTimer telemetry_timer{
-        Core::PerfTelemetry::TimeMetric::FaultService};
+    Core::PerfTelemetry::ScopedTimer telemetry_timer{Core::PerfTelemetry::TimeMetric::FaultService};
     buffer_cache.InvalidateMemory(addr, size);
     texture_cache.InvalidateMemory(addr, size);
     return true;
@@ -1262,8 +1260,7 @@ bool Rasterizer::ReadMemory(VAddr addr, u64 size) {
         return false;
     }
     Core::PerfTelemetry::Increment(Core::PerfTelemetry::Counter::GuestReadFaults);
-    Core::PerfTelemetry::ScopedTimer telemetry_timer{
-        Core::PerfTelemetry::TimeMetric::FaultService};
+    Core::PerfTelemetry::ScopedTimer telemetry_timer{Core::PerfTelemetry::TimeMetric::FaultService};
     buffer_cache.ReadMemory(addr, size);
     return true;
 }

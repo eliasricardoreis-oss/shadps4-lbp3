@@ -416,8 +416,7 @@ int PS4_SYSV_ABI sys_sendmsg(OrbisNetId s, const OrbisNetMsghdr* msg, int flags)
         return -1;
     }
     if (msg != nullptr &&
-        RejectExternalLbp3Socket(*file->socket,
-                                 static_cast<const OrbisNetSockaddr*>(msg->msg_name),
+        RejectExternalLbp3Socket(*file->socket, static_cast<const OrbisNetSockaddr*>(msg->msg_name),
                                  msg->msg_namelen, "sendmsg")) {
         return -1;
     }

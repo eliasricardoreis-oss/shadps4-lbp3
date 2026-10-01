@@ -3,15 +3,15 @@
 
 #pragma once
 
+#include <cstddef>
+#include <optional>
+#include <utility>
+#include <vector>
 #include "common/types.h"
 #include "core/gpu_wait_telemetry.h"
 #include "core/memory.h"
 #include "video_core/amdgpu/resource.h"
 #include "video_core/renderer_vulkan/vk_common.h"
-#include <cstddef>
-#include <optional>
-#include <utility>
-#include <vector>
 
 namespace Vulkan {
 class Instance;
@@ -27,247 +27,256 @@ namespace VideoCore {
 
 /// Hints and requirements for the backing memory type of a commit
 enum class MemoryUsage {
-  DeviceLocal, ///< Requests device local buffer.
-  Upload,      ///< Requires a host visible memory type optimized for CPU to GPU
-               ///< uploads
-  Download,    ///< Requires a host visible memory type optimized for GPU to CPU
-               ///< readbacks
-  Stream,      ///< Requests device local host visible buffer, falling back host
-               ///< memory.
-  HostImported, ///< Uses the page-aligned guest allocation as Vulkan buffer
-                ///< backing.
+    DeviceLocal,  ///< Requests device local buffer.
+    Upload,       ///< Requires a host visible memory type optimized for CPU to GPU
+                  ///< uploads
+    Download,     ///< Requires a host visible memory type optimized for GPU to CPU
+                  ///< readbacks
+    Stream,       ///< Requests device local host visible buffer, falling back host
+                  ///< memory.
+    HostImported, ///< Uses the page-aligned guest allocation as Vulkan buffer
+                  ///< backing.
 };
 
 constexpr vk::BufferUsageFlags ReadFlags =
-    vk::BufferUsageFlagBits::eTransferSrc |
-    vk::BufferUsageFlagBits::eUniformBuffer |
-    vk::BufferUsageFlagBits::eIndexBuffer |
-    vk::BufferUsageFlagBits::eVertexBuffer |
+    vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eUniformBuffer |
+    vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eVertexBuffer |
     vk::BufferUsageFlagBits::eIndirectBuffer;
 
 constexpr vk::BufferUsageFlags AllFlags =
-    ReadFlags | vk::BufferUsageFlagBits::eTransferDst |
-    vk::BufferUsageFlagBits::eStorageBuffer;
+    ReadFlags | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eStorageBuffer;
 
 struct UniqueBuffer {
-  explicit UniqueBuffer(vk::Device device, VmaAllocator allocator);
-  ~UniqueBuffer();
+    explicit UniqueBuffer(vk::Device device, VmaAllocator allocator);
+    ~UniqueBuffer();
 
-  UniqueBuffer(const UniqueBuffer &) = delete;
-  UniqueBuffer &operator=(const UniqueBuffer &) = delete;
+    UniqueBuffer(const UniqueBuffer&) = delete;
+    UniqueBuffer& operator=(const UniqueBuffer&) = delete;
 
-  UniqueBuffer(UniqueBuffer &&other) noexcept
-      : device{other.device},
-        allocator{std::exchange(other.allocator, VK_NULL_HANDLE)},
-        allocation{std::exchange(other.allocation, VK_NULL_HANDLE)},
-        buffer{std::exchange(other.buffer, VK_NULL_HANDLE)},
-        bda_addr{std::exchange(other.bda_addr, 0)} {}
-  UniqueBuffer &operator=(UniqueBuffer &&other) noexcept {
-    if (this == &other) {
-      return *this;
+    UniqueBuffer(UniqueBuffer&& other) noexcept
+        : device{other.device}, allocator{std::exchange(other.allocator, VK_NULL_HANDLE)},
+          allocation{std::exchange(other.allocation, VK_NULL_HANDLE)},
+          buffer{std::exchange(other.buffer, VK_NULL_HANDLE)},
+          bda_addr{std::exchange(other.bda_addr, 0)} {}
+    UniqueBuffer& operator=(UniqueBuffer&& other) noexcept {
+        if (this == &other) {
+            return *this;
+        }
+        Destroy();
+        device = other.device;
+        buffer = std::exchange(other.buffer, VK_NULL_HANDLE);
+        allocator = std::exchange(other.allocator, VK_NULL_HANDLE);
+        allocation = std::exchange(other.allocation, VK_NULL_HANDLE);
+        bda_addr = std::exchange(other.bda_addr, 0);
+        return *this;
     }
-    Destroy();
-    device = other.device;
-    buffer = std::exchange(other.buffer, VK_NULL_HANDLE);
-    allocator = std::exchange(other.allocator, VK_NULL_HANDLE);
-    allocation = std::exchange(other.allocation, VK_NULL_HANDLE);
-    bda_addr = std::exchange(other.bda_addr, 0);
-    return *this;
-  }
 
-  void Create(const vk::BufferCreateInfo &image_ci, MemoryUsage usage,
-              VmaAllocationInfo *out_alloc_info);
-  [[nodiscard]] bool CreateHostImported(const Vulkan::Instance &instance,
-                                        const vk::BufferCreateInfo &buffer_ci,
-                                        VAddr cpu_addr, u64 size_bytes);
+    void Create(const vk::BufferCreateInfo& image_ci, MemoryUsage usage,
+                VmaAllocationInfo* out_alloc_info);
+    [[nodiscard]] bool CreateHostImported(const Vulkan::Instance& instance,
+                                          const vk::BufferCreateInfo& buffer_ci, VAddr cpu_addr,
+                                          u64 size_bytes);
 
-  [[nodiscard]] bool IsHostImported() const noexcept {
-    return buffer && allocator == VK_NULL_HANDLE;
-  }
+    [[nodiscard]] bool IsHostImported() const noexcept {
+        return buffer && allocator == VK_NULL_HANDLE;
+    }
 
-  operator vk::Buffer() const { return buffer; }
+    operator vk::Buffer() const {
+        return buffer;
+    }
 
-  vk::Device device;
-  VmaAllocator allocator;
-  VmaAllocation allocation;
-  vk::Buffer buffer{};
-  vk::DeviceAddress bda_addr = 0;
+    vk::Device device;
+    VmaAllocator allocator;
+    VmaAllocation allocation;
+    vk::Buffer buffer{};
+    vk::DeviceAddress bda_addr = 0;
 
 private:
-  void Destroy() noexcept;
+    void Destroy() noexcept;
 };
 
 class Buffer {
 public:
-  explicit Buffer(const Vulkan::Instance &instance,
-                  Vulkan::Scheduler &scheduler, MemoryUsage usage,
-                  VAddr cpu_addr_, vk::BufferUsageFlags flags, u64 size_bytes_);
+    explicit Buffer(const Vulkan::Instance& instance, Vulkan::Scheduler& scheduler,
+                    MemoryUsage usage, VAddr cpu_addr_, vk::BufferUsageFlags flags,
+                    u64 size_bytes_);
 
-  Buffer &operator=(const Buffer &) = delete;
-  Buffer(const Buffer &) = delete;
+    Buffer& operator=(const Buffer&) = delete;
+    Buffer(const Buffer&) = delete;
 
-  Buffer &operator=(Buffer &&) = default;
-  Buffer(Buffer &&) = default;
+    Buffer& operator=(Buffer&&) = default;
+    Buffer(Buffer&&) = default;
 
-  void IncreaseStreamScore(int score) noexcept { stream_score += score; }
-
-  [[nodiscard]] int StreamScore() const noexcept { return stream_score; }
-
-  [[nodiscard]] bool IsInBounds(VAddr addr, u64 size) const noexcept {
-    return addr >= cpu_addr && addr + size <= cpu_addr + SizeBytes();
-  }
-
-  [[nodiscard]] VAddr CpuAddr() const noexcept { return cpu_addr; }
-
-  [[nodiscard]] u64 Offset(VAddr other_cpu_addr) const noexcept {
-    return other_cpu_addr - cpu_addr;
-  }
-
-  size_t SizeBytes() const { return size_bytes; }
-
-  void SetLRUId(u64 id) noexcept { lru_id = id; }
-
-  u64 LRUId() const noexcept { return lru_id; }
-
-  vk::Buffer Handle() const noexcept { return buffer; }
-
-  vk::DeviceAddress BufferDeviceAddress() const noexcept {
-    ASSERT_MSG(buffer.bda_addr != 0, "Can't get BDA from a non BDA buffer");
-    return buffer.bda_addr;
-  }
-
-  /// Replaces the device-local backing with imported guest memory and returns
-  /// the old backing so the caller can retire it only after publishing the new
-  /// buffer device address to every GPU consumer.
-  [[nodiscard]] std::optional<UniqueBuffer>
-  TryImportHostMemory(vk::BufferUsageFlags flags);
-
-  [[nodiscard]] bool IsHostImported() const noexcept {
-    return usage == MemoryUsage::HostImported;
-  }
-
-  void MarkHostWrite() noexcept {
-    access_mask = vk::AccessFlagBits2::eHostWrite;
-    stage = vk::PipelineStageFlagBits2::eHost;
-  }
-
-  std::optional<vk::BufferMemoryBarrier2>
-  GetBarrier(vk::AccessFlags2 dst_acess_mask,
-             vk::PipelineStageFlagBits2 dst_stage, u32 offset = 0) {
-    // Imported guest memory can be written directly by the CPU without a page
-    // fault, so its last host access cannot be represented by access_mask.
-    // Always publish both host and device writes before every imported-buffer
-    // use instead of eliding an apparently redundant barrier.
-    if (IsHostImported()) {
-      DEBUG_ASSERT(offset < size_bytes);
-      return vk::BufferMemoryBarrier2{
-          .srcStageMask = vk::PipelineStageFlagBits2::eAllCommands |
-                          vk::PipelineStageFlagBits2::eHost,
-          .srcAccessMask = vk::AccessFlagBits2::eMemoryRead |
-                           vk::AccessFlagBits2::eMemoryWrite |
-                           vk::AccessFlagBits2::eHostWrite,
-          .dstStageMask = dst_stage,
-          .dstAccessMask = dst_acess_mask,
-          .buffer = buffer.buffer,
-          .offset = offset,
-          .size = size_bytes - offset,
-      };
+    void IncreaseStreamScore(int score) noexcept {
+        stream_score += score;
     }
 
-    if (dst_acess_mask == access_mask && stage == dst_stage) {
-      return {};
+    [[nodiscard]] int StreamScore() const noexcept {
+        return stream_score;
     }
 
-    DEBUG_ASSERT(offset < size_bytes);
+    [[nodiscard]] bool IsInBounds(VAddr addr, u64 size) const noexcept {
+        return addr >= cpu_addr && addr + size <= cpu_addr + SizeBytes();
+    }
 
-    const auto barrier = vk::BufferMemoryBarrier2{
-        .srcStageMask = stage,
-        .srcAccessMask = access_mask,
-        .dstStageMask = dst_stage,
-        .dstAccessMask = dst_acess_mask,
-        .buffer = buffer.buffer,
-        .offset = offset,
-        .size = size_bytes - offset,
-    };
-    access_mask = dst_acess_mask;
-    stage = dst_stage;
-    return barrier;
-  }
+    [[nodiscard]] VAddr CpuAddr() const noexcept {
+        return cpu_addr;
+    }
 
-  void Fill(u64 offset, u64 num_bytes, u32 value);
+    [[nodiscard]] u64 Offset(VAddr other_cpu_addr) const noexcept {
+        return other_cpu_addr - cpu_addr;
+    }
+
+    size_t SizeBytes() const {
+        return size_bytes;
+    }
+
+    void SetLRUId(u64 id) noexcept {
+        lru_id = id;
+    }
+
+    u64 LRUId() const noexcept {
+        return lru_id;
+    }
+
+    vk::Buffer Handle() const noexcept {
+        return buffer;
+    }
+
+    vk::DeviceAddress BufferDeviceAddress() const noexcept {
+        ASSERT_MSG(buffer.bda_addr != 0, "Can't get BDA from a non BDA buffer");
+        return buffer.bda_addr;
+    }
+
+    /// Replaces the device-local backing with imported guest memory and returns
+    /// the old backing so the caller can retire it only after publishing the new
+    /// buffer device address to every GPU consumer.
+    [[nodiscard]] std::optional<UniqueBuffer> TryImportHostMemory(vk::BufferUsageFlags flags);
+
+    [[nodiscard]] bool IsHostImported() const noexcept {
+        return usage == MemoryUsage::HostImported;
+    }
+
+    void MarkHostWrite() noexcept {
+        access_mask = vk::AccessFlagBits2::eHostWrite;
+        stage = vk::PipelineStageFlagBits2::eHost;
+    }
+
+    std::optional<vk::BufferMemoryBarrier2> GetBarrier(vk::AccessFlags2 dst_acess_mask,
+                                                       vk::PipelineStageFlagBits2 dst_stage,
+                                                       u32 offset = 0) {
+        // Imported guest memory can be written directly by the CPU without a page
+        // fault, so its last host access cannot be represented by access_mask.
+        // Always publish both host and device writes before every imported-buffer
+        // use instead of eliding an apparently redundant barrier.
+        if (IsHostImported()) {
+            DEBUG_ASSERT(offset < size_bytes);
+            return vk::BufferMemoryBarrier2{
+                .srcStageMask =
+                    vk::PipelineStageFlagBits2::eAllCommands | vk::PipelineStageFlagBits2::eHost,
+                .srcAccessMask = vk::AccessFlagBits2::eMemoryRead |
+                                 vk::AccessFlagBits2::eMemoryWrite |
+                                 vk::AccessFlagBits2::eHostWrite,
+                .dstStageMask = dst_stage,
+                .dstAccessMask = dst_acess_mask,
+                .buffer = buffer.buffer,
+                .offset = offset,
+                .size = size_bytes - offset,
+            };
+        }
+
+        if (dst_acess_mask == access_mask && stage == dst_stage) {
+            return {};
+        }
+
+        DEBUG_ASSERT(offset < size_bytes);
+
+        const auto barrier = vk::BufferMemoryBarrier2{
+            .srcStageMask = stage,
+            .srcAccessMask = access_mask,
+            .dstStageMask = dst_stage,
+            .dstAccessMask = dst_acess_mask,
+            .buffer = buffer.buffer,
+            .offset = offset,
+            .size = size_bytes - offset,
+        };
+        access_mask = dst_acess_mask;
+        stage = dst_stage;
+        return barrier;
+    }
+
+    void Fill(u64 offset, u64 num_bytes, u32 value);
 
 public:
-  VAddr cpu_addr = 0;
-  bool is_picked{};
-  bool is_coherent{};
-  bool is_deleted{};
-  int stream_score = 0;
-  size_t size_bytes = 0;
-  u64 lru_id = 0;
-  std::span<u8> mapped_data;
-  const Vulkan::Instance *instance;
-  Vulkan::Scheduler *scheduler;
-  MemoryUsage usage;
-  UniqueBuffer buffer;
-  vk::Flags<vk::AccessFlagBits2> access_mask{
-      vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite |
-      vk::AccessFlagBits2::eTransferRead | vk::AccessFlagBits2::eTransferWrite};
-  vk::PipelineStageFlagBits2 stage{vk::PipelineStageFlagBits2::eAllCommands};
+    VAddr cpu_addr = 0;
+    bool is_picked{};
+    bool is_coherent{};
+    bool is_deleted{};
+    int stream_score = 0;
+    size_t size_bytes = 0;
+    u64 lru_id = 0;
+    std::span<u8> mapped_data;
+    const Vulkan::Instance* instance;
+    Vulkan::Scheduler* scheduler;
+    MemoryUsage usage;
+    UniqueBuffer buffer;
+    vk::Flags<vk::AccessFlagBits2> access_mask{
+        vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite |
+        vk::AccessFlagBits2::eTransferRead | vk::AccessFlagBits2::eTransferWrite};
+    vk::PipelineStageFlagBits2 stage{vk::PipelineStageFlagBits2::eAllCommands};
 };
 
 class StreamBuffer : public Buffer {
 public:
-  explicit StreamBuffer(const Vulkan::Instance &instance,
-                        Vulkan::Scheduler &scheduler, MemoryUsage usage,
-                        u64 size_bytes_,
-                        Core::PerfTelemetry::GpuWaitResource telemetry_resource_ = {});
+    explicit StreamBuffer(const Vulkan::Instance& instance, Vulkan::Scheduler& scheduler,
+                          MemoryUsage usage, u64 size_bytes_,
+                          Core::PerfTelemetry::GpuWaitResource telemetry_resource_ = {});
 
-  /// Reserves a region of memory from the stream buffer.
-  std::pair<u8 *, u64> Map(u64 size, u64 alignment = 0, bool allow_wait = true);
+    /// Reserves a region of memory from the stream buffer.
+    std::pair<u8*, u64> Map(u64 size, u64 alignment = 0, bool allow_wait = true);
 
-  /// Reserves a GPU-only region without requiring or flushing a host mapping.
-  std::optional<u64> Reserve(u64 size, u64 alignment = 0,
-                             bool allow_wait = true);
+    /// Reserves a GPU-only region without requiring or flushing a host mapping.
+    std::optional<u64> Reserve(u64 size, u64 alignment = 0, bool allow_wait = true);
 
-  /// Ensures that reserved bytes of memory are available to the GPU.
-  void Commit(bool flush_host_writes = true);
+    /// Ensures that reserved bytes of memory are available to the GPU.
+    void Commit(bool flush_host_writes = true);
 
-  /// Maps and commits a memory region with user provided data
-  u64 Copy(auto src, size_t size, size_t alignment = 0) {
-    const auto [data, offset] = Map(size, alignment);
-    auto *memory = Core::Memory::Instance();
-    const VAddr src_vaddr = reinterpret_cast<const VAddr>(src);
-    if (memory->IsValidMapping(src_vaddr)) {
-      memory->CopySparseMemory(src_vaddr, data, size);
-    } else {
-      std::memcpy(data, reinterpret_cast<const void *>(src), size);
+    /// Maps and commits a memory region with user provided data
+    u64 Copy(auto src, size_t size, size_t alignment = 0) {
+        const auto [data, offset] = Map(size, alignment);
+        auto* memory = Core::Memory::Instance();
+        const VAddr src_vaddr = reinterpret_cast<const VAddr>(src);
+        if (memory->IsValidMapping(src_vaddr)) {
+            memory->CopySparseMemory(src_vaddr, data, size);
+        } else {
+            std::memcpy(data, reinterpret_cast<const void*>(src), size);
+        }
+        Commit();
+        return offset;
     }
-    Commit();
-    return offset;
-  }
 
 private:
-  Core::PerfTelemetry::GpuWaitResource telemetry_resource;
-  struct Watch {
-    u64 tick{};
-    u64 upper_bound{};
-  };
+    Core::PerfTelemetry::GpuWaitResource telemetry_resource;
+    struct Watch {
+        u64 tick{};
+        u64 upper_bound{};
+    };
 
-  /// Increases the amount of watches available.
-  void ReserveWatches(std::vector<Watch> &watches, std::size_t grow_size);
+    /// Increases the amount of watches available.
+    void ReserveWatches(std::vector<Watch>& watches, std::size_t grow_size);
 
-  /// Waits pending watches until requested upper bound.
-  bool WaitPendingOperations(u64 requested_upper_bound, bool allow_wait);
+    /// Waits pending watches until requested upper bound.
+    bool WaitPendingOperations(u64 requested_upper_bound, bool allow_wait);
 
 private:
-  u64 offset{};
-  u64 mapped_size{};
-  std::vector<Watch> current_watches;
-  std::size_t current_watch_cursor{};
-  std::optional<size_t> invalidation_mark;
-  std::vector<Watch> previous_watches;
-  std::size_t wait_cursor{};
-  u64 wait_bound{};
+    u64 offset{};
+    u64 mapped_size{};
+    std::vector<Watch> current_watches;
+    std::size_t current_watch_cursor{};
+    std::optional<size_t> invalidation_mark;
+    std::vector<Watch> previous_watches;
+    std::size_t wait_cursor{};
+    u64 wait_bound{};
 };
 
 // Transient storage used by compute/transfer commands on one scheduler's queue.
@@ -276,19 +285,23 @@ private:
 // Unlike a host stream, reuse needs a GPU dependency rather than a host timeline wait.
 class GpuScratchBuffer {
 public:
-  GpuScratchBuffer(const Vulkan::Instance& instance, Vulkan::Scheduler& scheduler,
-                   u64 size_bytes);
+    GpuScratchBuffer(const Vulkan::Instance& instance, Vulkan::Scheduler& scheduler,
+                     u64 size_bytes);
 
-  std::optional<u64> Reserve(u64 size, u64 alignment = 0);
+    std::optional<u64> Reserve(u64 size, u64 alignment = 0);
 
-  vk::Buffer Handle() const noexcept { return buffer.Handle(); }
-  u64 SizeBytes() const noexcept { return buffer.SizeBytes(); }
+    vk::Buffer Handle() const noexcept {
+        return buffer.Handle();
+    }
+    u64 SizeBytes() const noexcept {
+        return buffer.SizeBytes();
+    }
 
 private:
-  Vulkan::Scheduler& scheduler;
-  Buffer buffer;
-  u64 cursor{};
-  bool wrapped{};
+    Vulkan::Scheduler& scheduler;
+    Buffer buffer;
+    u64 cursor{};
+    bool wrapped{};
 };
 
 } // namespace VideoCore

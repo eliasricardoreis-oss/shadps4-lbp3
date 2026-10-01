@@ -4,8 +4,8 @@
 #include "common/elf_info.h"
 #include "common/io_file.h"
 #include "common/path_util.h"
-#include "common/serdes.h"
 #include "common/scope_exit.h"
+#include "common/serdes.h"
 #include "core/emulator_settings.h"
 #include "shader_recompiler/frontend/fetch_shader.h"
 #include "shader_recompiler/info.h"
@@ -14,8 +14,8 @@
 #include "video_core/renderer_vulkan/vk_pipeline_cache.h"
 #include "video_core/renderer_vulkan/vk_shader_util.h"
 
-#include <type_traits>
 #include <chrono>
+#include <type_traits>
 
 #ifdef __APPLE__
 #include "sdl_window.h"
@@ -103,8 +103,7 @@ u64 StableProfileHash(const Shader::Profile& profile) {
     return hash;
 }
 
-bool IsCompatibleProfileFile(const std::filesystem::path& path,
-                             const Shader::Profile& profile) {
+bool IsCompatibleProfileFile(const std::filesystem::path& path, const Shader::Profile& profile) {
     Common::FS::IOFile file{path, Common::FS::FileAccessMode::Read};
     if (!file.IsOpen() || file.GetSize() != sizeof(Shader::Profile)) {
         return false;
@@ -174,8 +173,8 @@ void MigrateCompatibleLbp3Profiles(std::string_view profile_prefix,
     const auto title_root = Common::FS::GetUserPath(Common::FS::PathType::CacheDir) / "CUSA00063";
     u32 imported{};
     for (const auto* side : {"runtime", "seed"}) {
-        imported += MergeCompatibleProfileDirectories(
-            title_root / side / "spirv" / "v1", profile_prefix, canonical_namespace, profile);
+        imported += MergeCompatibleProfileDirectories(title_root / side / "spirv" / "v1",
+                                                      profile_prefix, canonical_namespace, profile);
     }
     if (imported != 0) {
         LOG_INFO(Render, "Merged {} compatible LBP3 shader-cache files into stable profile {}",
@@ -520,7 +519,8 @@ void PipelineCache::WarmUp() {
 
     u32 num_pipelines{};
     u32 num_total_pipelines{};
-    const auto preload_total = Storage::DataBase::Instance().CountBlobs(Storage::BlobType::PipelineKey);
+    const auto preload_total =
+        Storage::DataBase::Instance().CountBlobs(Storage::BlobType::PipelineKey);
     const auto preload_start = std::chrono::steady_clock::now();
 #ifdef __APPLE__
     if (g_window && preload_total) {
@@ -541,7 +541,7 @@ void PipelineCache::WarmUp() {
             const auto now = std::chrono::steady_clock::now();
             if (g_window && now - last_progress >= std::chrono::milliseconds{250}) {
                 Frontend::ShowGraphicsPreparation(g_window->GetSDLWindow(), num_total_pipelines,
-                                                 preload_total);
+                                                  preload_total);
                 last_progress = now;
             }
 #endif
@@ -571,8 +571,9 @@ void PipelineCache::WarmUp() {
             }
         });
 
-    LOG_INFO(Render, "Preloaded {} pipelines in {:.1f} seconds", num_pipelines,
-             std::chrono::duration<double>(std::chrono::steady_clock::now() - preload_start).count());
+    LOG_INFO(
+        Render, "Preloaded {} pipelines in {:.1f} seconds", num_pipelines,
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - preload_start).count());
     if (num_total_pipelines > num_pipelines) {
         LOG_WARNING(Render, "{} stale pipelines were found. Consider re-generating the cache",
                     num_total_pipelines - num_pipelines);

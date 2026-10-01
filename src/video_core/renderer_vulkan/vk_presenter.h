@@ -43,8 +43,7 @@ struct Frame {
     [[nodiscard]] bool IsPresentComplete(vk::Device device) const {
         const auto result = device.getFenceStatus(present_done);
         ASSERT_MSG(result == vk::Result::eSuccess || result == vk::Result::eNotReady,
-                   "Unexpected fence status while checking frame reuse: {}",
-                   vk::to_string(result));
+                   "Unexpected fence status while checking frame reuse: {}", vk::to_string(result));
         return result == vk::Result::eSuccess;
     }
 };

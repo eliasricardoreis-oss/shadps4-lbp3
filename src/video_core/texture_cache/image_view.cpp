@@ -113,7 +113,7 @@ ImageView::ImageView(const Vulkan::Instance& instance, const ImageViewInfo& info
         format = image.info.pixel_format;
         aspect = vk::ImageAspectFlagBits::eStencil;
     } else if (image.aspect_mask & vk::ImageAspectFlagBits::eDepth &&
-        Vulkan::LiverpoolToVK::IsFormatDepthCompatible(format)) {
+               Vulkan::LiverpoolToVK::IsFormatDepthCompatible(format)) {
         format = image.info.pixel_format;
         aspect = vk::ImageAspectFlagBits::eDepth;
     }

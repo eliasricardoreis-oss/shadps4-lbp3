@@ -34,9 +34,9 @@ enum ImageFlagBits : u32 {
     GpuModified = 1 << 3, ///< Contents have been modified from the GPU
     GcPending = 1 << 4,   ///< An asynchronous GC readback is pending for this image
     DimensionalAliasStale =
-        1 << 5, ///< A coherent 2D-array/3D peer contains newer GPU-written contents
-    Registered = 1 << 6,  ///< True when the image is registered
-    Picked = 1 << 7,      ///< Temporary flag to mark the image as picked
+        1 << 5,          ///< A coherent 2D-array/3D peer contains newer GPU-written contents
+    Registered = 1 << 6, ///< True when the image is registered
+    Picked = 1 << 7,     ///< Temporary flag to mark the image as picked
 };
 DECLARE_ENUM_FLAG_OPERATORS(ImageFlagBits)
 

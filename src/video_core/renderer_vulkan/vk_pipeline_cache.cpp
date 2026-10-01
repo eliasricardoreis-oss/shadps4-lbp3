@@ -443,17 +443,14 @@ PipelineCache::PipelineCache(const Instance& instance_, Scheduler& scheduler_,
 
     if (UseAsyncGraphicsCompilation(instance) && !EmulatorSettings.IsShaderCollect()) {
         async_compiler = std::make_unique<AsyncCompiler>();
-        auto [async_cache_result, async_cache] =
-            instance.GetDevice().createPipelineCacheUnique({});
+        auto [async_cache_result, async_cache] = instance.GetDevice().createPipelineCacheUnique({});
         ASSERT_MSG(async_cache_result == vk::Result::eSuccess,
-                   "Failed to create async pipeline cache: {}",
-                   vk::to_string(async_cache_result));
+                   "Failed to create async pipeline cache: {}", vk::to_string(async_cache_result));
         async_compiler->pipeline_cache = std::move(async_cache);
         async_compiler->worker =
             std::jthread{[this](std::stop_token stop_token) { AsyncCompilerThread(stop_token); }};
-        LOG_INFO(Render_Vulkan,
-                 "Asynchronous graphics shader/pipeline compilation enabled; "
-                 "compute compilation remains synchronous");
+        LOG_INFO(Render_Vulkan, "Asynchronous graphics shader/pipeline compilation enabled; "
+                                "compute compilation remains synchronous");
     } else if (UseAsyncGraphicsCompilation(instance)) {
         LOG_WARNING(Render_Vulkan,
                     "Asynchronous graphics compilation disabled while shader collection is "
@@ -606,8 +603,7 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(bool expand_quad_list
                 if (infos[stage] == nullptr) {
                     continue;
                 }
-                request->snapshot_infos[stage] =
-                    std::make_unique<Shader::Info>(*infos[stage]);
+                request->snapshot_infos[stage] = std::make_unique<Shader::Info>(*infos[stage]);
                 auto& user_data = request->snapshot_user_data[stage];
                 const auto source_user_data = infos[stage]->user_data;
                 const size_t copy_count = std::min(user_data.size(), source_user_data.size());
@@ -621,8 +617,7 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(bool expand_quad_list
                     Core::PerfTelemetry::Counter::GraphicsPipelineCompiles);
                 Core::PerfTelemetry::ScopedTimer telemetry_timer{
                     Core::PerfTelemetry::TimeMetric::GraphicsPipelineCompile};
-                DebugState.BeginShaderCompile(
-                    DebugStateType::ShaderCompileKind::GraphicsPipeline);
+                DebugState.BeginShaderCompile(DebugStateType::ShaderCompileKind::GraphicsPipeline);
                 SCOPE_EXIT {
                     DebugState.EndShaderCompile();
                 };
@@ -646,9 +641,8 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(bool expand_quad_list
                         return;
                     }
                     if (!request->pipeline) {
-                        LOG_ERROR(Render_Vulkan,
-                                  "Async graphics pipeline {:#x} failed: {}", request->hash,
-                                  request->error);
+                        LOG_ERROR(Render_Vulkan, "Async graphics pipeline {:#x} failed: {}",
+                                  request->hash, request->error);
                         graphics_pipelines.erase(pipeline_it);
                         return;
                     }
@@ -673,8 +667,7 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline(bool expand_quad_list
             return nullptr;
         }
 
-        Core::PerfTelemetry::Increment(
-            Core::PerfTelemetry::Counter::GraphicsPipelineCompiles);
+        Core::PerfTelemetry::Increment(Core::PerfTelemetry::Counter::GraphicsPipelineCompiles);
         Core::PerfTelemetry::ScopedTimer telemetry_timer{
             Core::PerfTelemetry::TimeMetric::GraphicsPipelineCompile};
         DebugState.BeginShaderCompile(DebugStateType::ShaderCompileKind::GraphicsPipeline);
@@ -874,8 +867,7 @@ bool PipelineCache::RefreshGraphicsStages() {
         }
         std::optional<Shader::Gcn::FetchShaderData> fetch_shader_;
         std::tie(infos[stage_out_idx], modules[stage_out_idx], fetch_shader_,
-                 key.stage_hashes[stage_out_idx]) =
-            *program;
+                 key.stage_hashes[stage_out_idx]) = *program;
         if (fetch_shader_) {
             fetch_shader = fetch_shader_;
         }
@@ -920,12 +912,10 @@ bool PipelineCache::RefreshGraphicsStages() {
         if (!instance.IsTessellationSupported()) {
             return false;
         }
-        if (bind_stage(Stage::Hull, LogicalStage::TessellationControl) !=
-            BindStageResult::Ready) {
+        if (bind_stage(Stage::Hull, LogicalStage::TessellationControl) != BindStageResult::Ready) {
             return false;
         }
-        if (bind_stage(Stage::Vertex, LogicalStage::TessellationEval) !=
-            BindStageResult::Ready) {
+        if (bind_stage(Stage::Vertex, LogicalStage::TessellationEval) != BindStageResult::Ready) {
             return false;
         }
         if (bind_stage(Stage::Local, LogicalStage::Vertex) != BindStageResult::Ready) {
@@ -944,12 +934,10 @@ bool PipelineCache::RefreshGraphicsStages() {
             LOG_WARNING(Render_Vulkan, "Geometry shader features unsupported, skipping");
             return false;
         }
-        if (bind_stage(Stage::Hull, LogicalStage::TessellationControl) !=
-            BindStageResult::Ready) {
+        if (bind_stage(Stage::Hull, LogicalStage::TessellationControl) != BindStageResult::Ready) {
             return false;
         }
-        if (bind_stage(Stage::Export, LogicalStage::TessellationEval) !=
-            BindStageResult::Ready) {
+        if (bind_stage(Stage::Export, LogicalStage::TessellationEval) != BindStageResult::Ready) {
             return false;
         }
         if (bind_stage(Stage::Local, LogicalStage::Vertex) != BindStageResult::Ready) {
@@ -1042,9 +1030,9 @@ vk::ShaderModule PipelineCache::CompileModule(Shader::Info& info, Shader::Runtim
     return module;
 }
 
-std::optional<PipelineCache::Result> PipelineCache::GetProgram(
-    Stage stage, LogicalStage l_stage, const Shader::ShaderParams& params,
-    Shader::Backend::Bindings& binding) {
+std::optional<PipelineCache::Result> PipelineCache::GetProgram(Stage stage, LogicalStage l_stage,
+                                                               const Shader::ShaderParams& params,
+                                                               Shader::Backend::Bindings& binding) {
     auto runtime_info = BuildRuntimeInfo(stage, l_stage);
     // LBP3's sprite-light normalize/tone-map vertex shader renders one 2D-array slice per draw.
     // This otherwise-generic fullscreen VS is reused by pipelines with other primitive topologies,
@@ -1097,20 +1085,19 @@ std::optional<PipelineCache::Result> PipelineCache::GetProgram(
                 DebugState.EndShaderCompile();
             };
 
-            LOG_INFO(Render_Vulkan, "Compiling {} shader {:#x} {} asynchronously",
-                     request->stage, request->hash,
-                     request->permutation_index != 0 ? "(permutation)" : "");
+            LOG_INFO(Render_Vulkan, "Compiling {} shader {:#x} {} asynchronously", request->stage,
+                     request->hash, request->permutation_index != 0 ? "(permutation)" : "");
             try {
-                DumpShader(request->code, request->hash, request->stage,
-                           request->permutation_index, "bin");
+                DumpShader(request->code, request->hash, request->stage, request->permutation_index,
+                           "bin");
 
                 auto worker_runtime_info = request->runtime_info;
                 auto worker_binding = request->start_binding;
                 const auto ir_program =
-                    Shader::TranslateProgram(request->code, async_compiler->pools,
-                                             *request->info, worker_runtime_info, profile);
-                request->spirv = Shader::Backend::SPIRV::EmitSPIRV(
-                    profile, worker_runtime_info, ir_program, worker_binding);
+                    Shader::TranslateProgram(request->code, async_compiler->pools, *request->info,
+                                             worker_runtime_info, profile);
+                request->spirv = Shader::Backend::SPIRV::EmitSPIRV(profile, worker_runtime_info,
+                                                                   ir_program, worker_binding);
                 DumpShader(request->spirv, request->hash, request->stage,
                            request->permutation_index, "spv");
 
@@ -1133,8 +1120,8 @@ std::optional<PipelineCache::Result> PipelineCache::GetProgram(
                         *request->info, worker_runtime_info, profile, request->start_binding);
                 }
 
-                const auto name = GetShaderName(request->stage, request->hash,
-                                                request->permutation_index);
+                const auto name =
+                    GetShaderName(request->stage, request->hash, request->permutation_index);
                 Vulkan::SetObjectName(instance.GetDevice(), request->module, name);
             } catch (const std::exception& exception) {
                 request->error = exception.what();
@@ -1148,8 +1135,7 @@ std::optional<PipelineCache::Result> PipelineCache::GetProgram(
             request->info->user_data = {};
 
             QueueAsyncCompletion([this, request] {
-                const u64 permutation_hash =
-                    HashCombine(request->hash, request->permutation_index);
+                const u64 permutation_hash = HashCombine(request->hash, request->permutation_index);
                 const auto destroy_request_module = [&] {
                     if (request->module) {
                         instance.GetDevice().destroyShaderModule(request->module);
@@ -1160,8 +1146,8 @@ std::optional<PipelineCache::Result> PipelineCache::GetProgram(
                 if (request->is_base_program) {
                     async_pending_programs.erase(request->hash);
                     if (!request->error.empty() || !request->module) {
-                        LOG_ERROR(Render_Vulkan, "Async {} shader {:#x} failed: {}",
-                                  request->stage, request->hash, request->error);
+                        LOG_ERROR(Render_Vulkan, "Async {} shader {:#x} failed: {}", request->stage,
+                                  request->hash, request->error);
                         destroy_request_module();
                         return;
                     }
@@ -1197,8 +1183,7 @@ std::optional<PipelineCache::Result> PipelineCache::GetProgram(
                     return;
                 }
                 if (!request->error.empty() || !request->module) {
-                    LOG_ERROR(Render_Vulkan,
-                              "Async {} shader {:#x} permutation {} failed: {}",
+                    LOG_ERROR(Render_Vulkan, "Async {} shader {:#x} permutation {} failed: {}",
                               request->stage, request->hash, request->permutation_index,
                               request->error);
                     destroy_request_module();

@@ -166,8 +166,7 @@ static bool IsLbp3HelperAvailable(Libraries::UserService::OrbisUserServiceUserId
 
 static bool IsNpUserOnline(Libraries::UserService::OrbisUserServiceUserId user_id) {
     return IsLbp3HelperAvailable(user_id) ||
-           (g_shadnet_enabled &&
-            Libraries::Np::NpHandler::GetInstance().IsPsnSignedIn(user_id));
+           (g_shadnet_enabled && Libraries::Np::NpHandler::GetInstance().IsPsnSignedIn(user_id));
 }
 
 static s32 FindLbp3HelperUserByOnlineId(const OrbisNpOnlineId& online_id) {
@@ -683,9 +682,8 @@ s32 PS4_SYSV_ABI sceNpGetGamePresenceStatus(OrbisNpOnlineId* online_id,
     if (user_id == -1) {
         user_id = Libraries::Np::NpHandler::GetInstance().GetUserIdByOnlineId(*online_id);
     }
-    *game_status = user_id != -1 && IsNpUserOnline(user_id)
-                       ? OrbisNpGamePresenseStatus::Online
-                       : OrbisNpGamePresenseStatus::Offline;
+    *game_status = user_id != -1 && IsNpUserOnline(user_id) ? OrbisNpGamePresenseStatus::Online
+                                                            : OrbisNpGamePresenseStatus::Offline;
     return ORBIS_OK;
 }
 
@@ -741,8 +739,6 @@ s32 PS4_SYSV_ABI sceNpGetAccountIdA(Libraries::UserService::OrbisUserServiceUser
     }
     return ORBIS_OK;
 }
-
-
 
 s32 PS4_SYSV_ABI sceNpGetNpId(Libraries::UserService::OrbisUserServiceUserId user_id,
                               OrbisNpId* np_id) {
@@ -1265,9 +1261,8 @@ static void DispatchPendingNpStateCallbacks() {
 
             if (LegacyNpStateCb.func != nullptr &&
                 LegacyNpStateCb.last_sequence[event.user_id] < event.sequence) {
-                const bool defer_lbp3_signed_in =
-                    event.state == OrbisNpState::SignedIn &&
-                    !IsLbp3LegacySignedInReady(LegacyNpStateCb);
+                const bool defer_lbp3_signed_in = event.state == OrbisNpState::SignedIn &&
+                                                  !IsLbp3LegacySignedInReady(LegacyNpStateCb);
                 if (!defer_lbp3_signed_in) {
                     LegacyNpStateCb.last_sequence[event.user_id] = event.sequence;
                     dispatch.legacy = true;
@@ -1322,8 +1317,7 @@ static void DispatchPendingNpStateCallbacks() {
 
     for (auto& dispatch : dispatches) {
         auto& event = dispatch.event;
-        const size_t callback_a_count =
-            std::ranges::count(dispatch.callback_a, true);
+        const size_t callback_a_count = std::ranges::count(dispatch.callback_a, true);
         if (event.state == OrbisNpState::SignedIn) {
             LOG_CRITICAL(Lib_NpManager,
                          "Dispatching {}SignedIn seq={} for user_id={}: legacy={}, callback_a={}, "
@@ -1337,8 +1331,7 @@ static void DispatchPendingNpStateCallbacks() {
             u8 saved_transition_latch = 0;
             bool transition_latch_masked = false;
             if (event.state == OrbisNpState::SignedIn) {
-                transition_latch =
-                    GetLbp3LegacyPresentationTransitionLatch(legacy_callback);
+                transition_latch = GetLbp3LegacyPresentationTransitionLatch(legacy_callback);
                 if (transition_latch != nullptr) {
                     saved_transition_latch = *transition_latch;
                     if (saved_transition_latch != 0) {
@@ -1778,10 +1771,8 @@ void RegisterLib(Core::Loader::SymbolsResolver* sym) {
                  sceNpBandwidthTestInitStart);
     LIB_FUNCTION("pLr1fEQS1z8", "libSceNpUtility", 1, "libSceNpUtility",
                  sceNpBandwidthTestShutdown);
-    LIB_FUNCTION("8533Q+LU7EQ", "libSceNpUtility", 1, "libSceNpUtility",
-                 sceNpLookupCreateTitleCtx);
-    LIB_FUNCTION("mtqDK9zkoIE", "libSceNpUtility", 1, "libSceNpUtility",
-                 sceNpLookupDeleteTitleCtx);
+    LIB_FUNCTION("8533Q+LU7EQ", "libSceNpUtility", 1, "libSceNpUtility", sceNpLookupCreateTitleCtx);
+    LIB_FUNCTION("mtqDK9zkoIE", "libSceNpUtility", 1, "libSceNpUtility", sceNpLookupDeleteTitleCtx);
 
     LIB_FUNCTION("2rsFmlGWleQ", "libSceNpManagerCompat", 1, "libSceNpManager",
                  sceNpCheckNpAvailability);

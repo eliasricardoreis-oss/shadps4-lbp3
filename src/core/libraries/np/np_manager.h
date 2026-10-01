@@ -115,8 +115,8 @@ s32 PS4_SYSV_ABI sceNpGetOnlineId(Libraries::UserService::OrbisUserServiceUserId
                                   OrbisNpOnlineId* online_id);
 s32 PS4_SYSV_ABI sceNpGetState(Libraries::UserService::OrbisUserServiceUserId user_id,
                                OrbisNpState* state);
-s32 PS4_SYSV_ABI sceNpGetUserIdByOnlineId(
-    const OrbisNpOnlineId* online_id, Libraries::UserService::OrbisUserServiceUserId* user_id);
+s32 PS4_SYSV_ABI sceNpGetUserIdByOnlineId(const OrbisNpOnlineId* online_id,
+                                          Libraries::UserService::OrbisUserServiceUserId* user_id);
 s32 PS4_SYSV_ABI sceNpCheckNpAvailabilityA(s32 req_id,
                                            Libraries::UserService::OrbisUserServiceUserId user_id);
 s32 PS4_SYSV_ABI sceNpGetAccountLanguageA(s32 req_id,

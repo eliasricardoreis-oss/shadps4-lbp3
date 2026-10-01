@@ -46,7 +46,7 @@ void MasterSemaphore::Refresh() {
 }
 
 void MasterSemaphore::Wait(u64 tick, const Core::PerfTelemetry::GpuWaitInfo& info,
-                            std::source_location caller) {
+                           std::source_location caller) {
     // No need to wait if the GPU is ahead of the tick
     if (IsFree(tick)) {
         return;

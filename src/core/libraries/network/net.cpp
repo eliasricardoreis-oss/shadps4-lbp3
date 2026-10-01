@@ -824,8 +824,7 @@ int PS4_SYSV_ABI sceNetEpollWait(OrbisNetId epollid, OrbisNetEpollEvent* events,
     LOG_DEBUG(Lib_Net, "called, epollid = {} ({}), maxevents = {}, timeout = {}", epollid,
               epoll->name, maxevents, timeout);
 
-    const bool sockets_waited_on =
-        (epoll->events.size() - epoll->async_resolutions.size()) > 0;
+    const bool sockets_waited_on = (epoll->events.size() - epoll->async_resolutions.size()) > 0;
     const auto is_emulated_socket = [](const auto& entry) {
         auto socket_file = FDTable::Instance()->GetFile(entry.first);
         if (!socket_file || socket_file->type != Core::FileSys::FileType::Socket) {
@@ -834,8 +833,7 @@ int PS4_SYSV_ABI sceNetEpollWait(OrbisNetId epollid, OrbisNetEpollEvent* events,
         const auto socket = socket_file->socket;
         return socket && !socket->Native();
     };
-    const bool has_emulated_sockets =
-        std::ranges::any_of(epoll->events, is_emulated_socket);
+    const bool has_emulated_sockets = std::ranges::any_of(epoll->events, is_emulated_socket);
     const auto emulated_socket_ready = [&] {
         return std::ranges::any_of(epoll->events, [&](const auto& entry) {
             if (!is_emulated_socket(entry)) {
@@ -850,10 +848,9 @@ int PS4_SYSV_ABI sceNetEpollWait(OrbisNetId epollid, OrbisNetEpollEvent* events,
     int result = ORBIS_OK;
     bool emulated_ready = false;
     constexpr int EmulatedSocketPollIntervalUs = 1000;
-    const auto deadline = timeout < 0
-                              ? std::chrono::steady_clock::time_point::max()
-                              : std::chrono::steady_clock::now() +
-                                    std::chrono::microseconds(timeout);
+    const auto deadline =
+        timeout < 0 ? std::chrono::steady_clock::time_point::max()
+                    : std::chrono::steady_clock::now() + std::chrono::microseconds(timeout);
     do {
         emulated_ready = has_emulated_sockets && emulated_socket_ready();
         int wait_timeout = timeout;

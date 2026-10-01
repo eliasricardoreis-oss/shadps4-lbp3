@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2026 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include "core/performance_telemetry.h"
 #include "core/gpu_wait_log.h"
+#include "core/performance_telemetry.h"
 
 #include <algorithm>
 #include <array>
@@ -258,14 +258,16 @@ public:
         metadata.flush();
         const auto gpu_wait_path = std::filesystem::path{stem.string() + "_gpu_waits.csv"};
         const bool gpu_wait_open = gpu_wait_log.Open(gpu_wait_path, start_time);
-        metadata << "gpu_wait_attribution_version=1\ngpu_wait_log_open=" << gpu_wait_open << '\n'
-                 << "gpu_waits=" << gpu_wait_path.string() << '\n'
-                 << "gpu_wait_clock=steady_clock relative to start_steady_ns\n"
-                    "gpu_wait_semantics=blocking semaphore fallback only; includes final tick refresh\n"
-                    "gpu_wait_context_bits=1:texture_cache_lock,2:image_refresh,4:buffer_upload,"
-                    "8:upload_tracker_locks,16:image_download\n"
-                    "gpu_wait_retention=two rotating CSV files, at most 4 MiB each; latest events\n"
-                    "fault_lock_wait_semantics=wall time of contended acquisitions, summed across threads\n";
+        metadata
+            << "gpu_wait_attribution_version=1\ngpu_wait_log_open=" << gpu_wait_open << '\n'
+            << "gpu_waits=" << gpu_wait_path.string() << '\n'
+            << "gpu_wait_clock=steady_clock relative to start_steady_ns\n"
+               "gpu_wait_semantics=blocking semaphore fallback only; includes final tick refresh\n"
+               "gpu_wait_context_bits=1:texture_cache_lock,2:image_refresh,4:buffer_upload,"
+               "8:upload_tracker_locks,16:image_download\n"
+               "gpu_wait_retention=two rotating CSV files, at most 4 MiB each; latest events\n"
+               "fault_lock_wait_semantics=wall time of contended acquisitions, summed across "
+               "threads\n";
         metadata.flush();
         last_frame_time = start_time;
         last_frame_flush = start_time;

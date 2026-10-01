@@ -41,9 +41,9 @@
 #include "core/linker.h"
 #include "core/memory.h"
 #include "core/performance_telemetry.h"
-#include "input/input_movie.h"
 #include "core/user_settings.h"
 #include "emulator.h"
+#include "input/input_movie.h"
 #include "video_core/cache_storage.h"
 #include "video_core/renderdoc.h"
 

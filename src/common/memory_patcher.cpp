@@ -79,9 +79,8 @@ bool ConfigureLbp3DirectLevel(std::string_view spec) {
     if (!ParseU32(fields[0], target.slot_type) || !ParseU32(fields[1], target.slot_id)) {
         return false;
     }
-    if (field_count == 4 &&
-        (!ParseU32(fields[2], target.adventure_type) ||
-         !ParseU32(fields[3], target.adventure_id))) {
+    if (field_count == 4 && (!ParseU32(fields[2], target.adventure_type) ||
+                             !ParseU32(fields[3], target.adventure_id))) {
         return false;
     }
     g_lbp3_direct_level = target;
@@ -95,8 +94,8 @@ std::string GetLbp3DirectLevelSpec() {
     const auto& target = *g_lbp3_direct_level;
     std::string spec = std::to_string(target.slot_type) + ":" + std::to_string(target.slot_id);
     if (target.adventure_type != 0 || target.adventure_id != 0) {
-        spec += ":" + std::to_string(target.adventure_type) + ":" +
-                std::to_string(target.adventure_id);
+        spec +=
+            ":" + std::to_string(target.adventure_type) + ":" + std::to_string(target.adventure_id);
     }
     return spec;
 }
@@ -264,10 +263,8 @@ static void ApplyBuiltInLbp3CompatibilityPatches() {
     if (g_lbp3_direct_level) {
 #if defined(__APPLE__) && defined(ARCH_X86_64)
         static constexpr uintptr_t GuestImageBase = 0x400000;
-        static constexpr std::array<u8, 5> GameUpdateCallExpected{0xe8, 0x5a, 0xf1, 0x52,
-                                                                  0x00};
-        static constexpr std::array<u8, 5> GameUpdateCallPatch{0x0f, 0x0b, 0x90, 0x90,
-                                                               0x90};
+        static constexpr std::array<u8, 5> GameUpdateCallExpected{0xe8, 0x5a, 0xf1, 0x52, 0x00};
+        static constexpr std::array<u8, 5> GameUpdateCallPatch{0x0f, 0x0b, 0x90, 0x90, 0x90};
         static constexpr std::array<u8, 2> ReturnProbeExpected{0x90, 0x0f};
         static constexpr std::array<u8, 2> ReturnProbePatch{0x0f, 0x0b};
         static constexpr std::array<u8, 4> FunctionPrologueExpected{0x55, 0x48, 0x89, 0xe5};

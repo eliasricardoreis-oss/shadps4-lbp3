@@ -117,7 +117,7 @@ void Scheduler::Finish(std::source_location caller) {
 }
 
 void Scheduler::Wait(u64 tick, const Core::PerfTelemetry::GpuWaitInfo& info,
-                      std::source_location caller) {
+                     std::source_location caller) {
     if (tick >= master_semaphore.CurrentTick()) {
         // Make sure we are not waiting for the current tick without signalling
         SubmitInfo info{};

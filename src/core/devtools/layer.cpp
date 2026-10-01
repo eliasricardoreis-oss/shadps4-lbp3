@@ -314,7 +314,6 @@ void L::DrawSimple() {
              static_cast<unsigned long long>(::Core::PerfTelemetry::GetRecordedFrameCount()));
         PopStyleColor();
     }
-
 }
 
 static void LoadSettings(const char* line) {

@@ -10,13 +10,13 @@
 #include "common/scope_exit.h"
 #include "core/emulator_settings.h"
 #include "core/memory.h"
+#include "core/performance_telemetry.h"
 #include "video_core/buffer_cache/buffer_cache.h"
 #include "video_core/page_manager.h"
 #include "video_core/renderer_vulkan/vk_instance.h"
 #include "video_core/renderer_vulkan/vk_scheduler.h"
 #include "video_core/texture_cache/host_compatibility.h"
 #include "video_core/texture_cache/texture_cache.h"
-#include "core/performance_telemetry.h"
 #include "video_core/texture_cache/tile_manager.h"
 
 namespace VideoCore {
@@ -62,8 +62,8 @@ bool IsDimensionalAlias(const ImageInfo& lhs, const ImageInfo& rhs) {
 }
 
 bool CanUseVolumeMaster(const ImageInfo& master, const ImageInfo& view) {
-    if (master.type != AmdGpu::ImageType::Color3D ||
-        view.type == AmdGpu::ImageType::Color3D || !IsDimensionalAlias(master, view)) {
+    if (master.type != AmdGpu::ImageType::Color3D || view.type == AmdGpu::ImageType::Color3D ||
+        !IsDimensionalAlias(master, view)) {
         return false;
     }
 
@@ -71,10 +71,8 @@ bool CanUseVolumeMaster(const ImageInfo& master, const ImageInfo& view) {
     // depth slices through baseArrayLayer/layerCount. Compare the view's layer requirement with
     // volume depth instead of using SubresourceExtent::Contains on unrelated axes.
     const u32 required_slices = std::max(view.resources.layers, view.guest_resources.layers);
-    return master.resources.levels >= view.resources.levels &&
-           master.size.depth >= required_slices;
+    return master.resources.levels >= view.resources.levels && master.size.depth >= required_slices;
 }
-
 
 } // namespace
 
@@ -215,8 +213,7 @@ void TextureCache::DownloadImageMemory(ImageId image_id, bool sync, bool gc_reti
                         // is stale, so keep this image alive and retry after it is synchronized.
                         guest_is_current = false;
                     } else if (True(current_image.flags &
-                                           (ImageFlagBits::MaybeCpuDirty |
-                                            ImageFlagBits::CpuDirty))) {
+                                    (ImageFlagBits::MaybeCpuDirty | ImageFlagBits::CpuDirty))) {
                         // A CPU write won the race; its guest bytes are already authoritative.
                         guest_is_current = true;
                     } else {
@@ -228,8 +225,8 @@ void TextureCache::DownloadImageMemory(ImageId image_id, bool sync, bool gc_reti
             }
             *retirement_ready = guest_is_current;
         } else {
-            wrote_guest = Core::Memory::Instance()->TryWriteBacking(
-                std::bit_cast<u8*>(image_addr), download, image_size);
+            wrote_guest = Core::Memory::Instance()->TryWriteBacking(std::bit_cast<u8*>(image_addr),
+                                                                    download, image_size);
         }
         if (!sync && wrote_guest) {
             buffer_cache.InvalidateMemory(image_addr, image_size, false);
@@ -501,8 +498,7 @@ std::tuple<ImageId, int, int> TextureCache::ResolveOverlap(const ImageInfo& imag
         // tracks which resident peer is stale after a GPU write. Never route a compatible
         // dimensional alias through destructive image expansion.
         if (is_dimensional_alias) {
-            if (merged_image_id ||
-                True(cache_image.flags & ImageFlagBits::DimensionalAliasStale)) {
+            if (merged_image_id || True(cache_image.flags & ImageFlagBits::DimensionalAliasStale)) {
                 return {merged_image_id, -1, -1};
             }
             return {CreateDimensionalAlias(image_info, cache_image_id), -1, -1};
@@ -758,8 +754,8 @@ ImageId TextureCache::CreateDimensionalAlias(const ImageInfo& info, ImageId sour
     RefreshImage(alias);
     RefreshImage(source);
     alias.CopyImage(source);
-    alias.flags &= ~(ImageFlagBits::Dirty | ImageFlagBits::GpuModified |
-                     ImageFlagBits::DimensionalAliasStale);
+    alias.flags &=
+        ~(ImageFlagBits::Dirty | ImageFlagBits::GpuModified | ImageFlagBits::DimensionalAliasStale);
     alias.flags |= source.flags & ImageFlagBits::GpuModified;
     alias.mip_hashes = source.mip_hashes;
 
@@ -801,8 +797,7 @@ void TextureCache::SynchronizeDimensionalAlias(ImageId image_id) {
     if (!source_id) {
         // An authoritative peer can disappear only after its contents have been returned to guest
         // memory. Force a full guest refresh instead of ever sampling a known-stale host image.
-        destination.flags &= ~(ImageFlagBits::GpuModified |
-                               ImageFlagBits::DimensionalAliasStale);
+        destination.flags &= ~(ImageFlagBits::GpuModified | ImageFlagBits::DimensionalAliasStale);
         destination.flags |= ImageFlagBits::CpuDirty;
         return;
     }
@@ -810,8 +805,8 @@ void TextureCache::SynchronizeDimensionalAlias(ImageId image_id) {
     auto& source = slot_images[source_id];
     RefreshImage(source);
     destination.CopyImage(source);
-    destination.flags &= ~(ImageFlagBits::Dirty | ImageFlagBits::GpuModified |
-                           ImageFlagBits::DimensionalAliasStale);
+    destination.flags &=
+        ~(ImageFlagBits::Dirty | ImageFlagBits::GpuModified | ImageFlagBits::DimensionalAliasStale);
     destination.flags |= source.flags & ImageFlagBits::GpuModified;
     destination.mip_hashes = source.mip_hashes;
 }
@@ -938,21 +933,22 @@ ImageId TextureCache::FindImage(ImageDesc& desc, bool exact_fmt) {
                    !CanUseVolumeMaster(image_resolved.info, info)) {
             // The overlap search picked an image which cannot back the requested view. Never
             // discard it here: it may contain GPU-only results needed by a later aliasing view.
-            LOG_WARNING(
-                Render_Vulkan,
-                "Image overlap resolve selected an undersized resource:\n"
-                "  requested addr={:#x} size={:#x} type={} format={} M:{} L:{} tile={}\n"
-                "  resolved  addr={:#x} size={:#x} type={} format={} M:{} L:{} tile={} "
-                "flags={:#x} target={} bound={}",
-                info.guest_address, info.guest_size, AmdGpu::NameOf(info.type),
-                vk::to_string(info.pixel_format), info.resources.levels, info.resources.layers,
-                AmdGpu::NameOf(info.tile_mode), image_resolved.info.guest_address,
-                image_resolved.info.guest_size, AmdGpu::NameOf(image_resolved.info.type),
-                vk::to_string(image_resolved.info.pixel_format),
-                image_resolved.info.resources.levels, image_resolved.info.resources.layers,
-                AmdGpu::NameOf(image_resolved.info.tile_mode), static_cast<u32>(image_resolved.flags),
-                static_cast<u32>(image_resolved.binding.is_target),
-                static_cast<u32>(image_resolved.binding.is_bound));
+            LOG_WARNING(Render_Vulkan,
+                        "Image overlap resolve selected an undersized resource:\n"
+                        "  requested addr={:#x} size={:#x} type={} format={} M:{} L:{} tile={}\n"
+                        "  resolved  addr={:#x} size={:#x} type={} format={} M:{} L:{} tile={} "
+                        "flags={:#x} target={} bound={}",
+                        info.guest_address, info.guest_size, AmdGpu::NameOf(info.type),
+                        vk::to_string(info.pixel_format), info.resources.levels,
+                        info.resources.layers, AmdGpu::NameOf(info.tile_mode),
+                        image_resolved.info.guest_address, image_resolved.info.guest_size,
+                        AmdGpu::NameOf(image_resolved.info.type),
+                        vk::to_string(image_resolved.info.pixel_format),
+                        image_resolved.info.resources.levels, image_resolved.info.resources.layers,
+                        AmdGpu::NameOf(image_resolved.info.tile_mode),
+                        static_cast<u32>(image_resolved.flags),
+                        static_cast<u32>(image_resolved.binding.is_target),
+                        static_cast<u32>(image_resolved.binding.is_bound));
 
             const bool can_expand =
                 image_resolved.info.guest_address == info.guest_address &&
@@ -1425,8 +1421,8 @@ void TextureCache::GarbageCollectImages() {
             // the first image (even if it is larger than the ring); subsequent safe images wait
             // for the next GC pass once the bounded budget would be exceeded.
             if (download_bytes != 0 &&
-                image_size > MaxDownloadBytesPerPass -
-                                 std::min(download_bytes, MaxDownloadBytesPerPass)) {
+                image_size >
+                    MaxDownloadBytesPerPass - std::min(download_bytes, MaxDownloadBytesPerPass)) {
                 return true;
             }
             buffer_cache.ReadEdgeImagePages(image);

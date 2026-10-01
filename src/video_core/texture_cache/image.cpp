@@ -508,16 +508,14 @@ static std::pair<u32, u32> SanitizeCopyLayers(const ImageInfo& src_info, const I
         // never increase the array side beyond the host image's actual layer count.
         if (vk_src_type == vk::ImageType::e2D && vk_dst_type == vk::ImageType::e3D &&
             src_layers != depth) {
-            LOG_TRACE(Render_Vulkan,
-                      "Copying common 2D source layers/3D destination depth: {}/{}", src_layers,
-                      depth);
+            LOG_TRACE(Render_Vulkan, "Copying common 2D source layers/3D destination depth: {}/{}",
+                      src_layers, depth);
             src_layers = std::min(src_layers, depth);
         }
         if (vk_src_type == vk::ImageType::e3D && vk_dst_type == vk::ImageType::e2D &&
             dst_layers != depth) {
-            LOG_TRACE(Render_Vulkan,
-                      "Copying common 3D source depth/2D destination layers: {}/{}", depth,
-                      dst_layers);
+            LOG_TRACE(Render_Vulkan, "Copying common 3D source depth/2D destination layers: {}/{}",
+                      depth, dst_layers);
             dst_layers = std::min(dst_layers, depth);
         }
     }
@@ -824,22 +822,21 @@ void Image::Clear(const vk::ClearValue& clear_value, const VideoCore::Subresourc
         Transit(vk::ImageLayout::eColorAttachmentOptimal,
                 vk::AccessFlagBits2::eColorAttachmentWrite, {});
 
-        for (u32 level = range.base.level;
-             level < range.base.level + range.extent.levels; ++level) {
+        for (u32 level = range.base.level; level < range.base.level + range.extent.levels;
+             ++level) {
             const u32 mip_width = std::max(info.size.width >> level, 1u);
             const u32 mip_height = std::max(info.size.height >> level, 1u);
             const u32 mip_depth = std::max(info.size.depth >> level, 1u);
             const u32 base_slice = std::min(range.base.layer, mip_depth - 1);
-            const u32 slice_count =
-                std::min(range.extent.layers, mip_depth - base_slice);
+            const u32 slice_count = std::min(range.extent.layers, mip_depth - base_slice);
             if (slice_count == 0) {
                 continue;
             }
 
             ImageViewInfo slice_view{};
             slice_view.format = info.pixel_format;
-            slice_view.type = slice_count > 1 ? AmdGpu::ImageType::Color2DArray
-                                              : AmdGpu::ImageType::Color2D;
+            slice_view.type =
+                slice_count > 1 ? AmdGpu::ImageType::Color2DArray : AmdGpu::ImageType::Color2D;
             slice_view.range.base.level = level;
             slice_view.range.base.layer = base_slice;
             slice_view.range.extent.levels = 1;

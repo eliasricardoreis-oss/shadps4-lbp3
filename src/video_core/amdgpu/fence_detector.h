@@ -64,8 +64,7 @@ private:
             case PM4ItOpcode::EventWriteEos: {
                 const auto* event_eos = reinterpret_cast<const PM4CmdEventWriteEos*>(header);
                 if (event_eos->command == PM4CmdEventWriteEos::Command::SignalFence) {
-                    fences.push_back({header,
-                                      reinterpret_cast<VAddr>(event_eos->Address<void*>()),
+                    fences.push_back({header, reinterpret_cast<VAddr>(event_eos->Address<void*>()),
                                       event_eos->DataDWord()});
                 }
                 break;
@@ -76,12 +75,10 @@ private:
                     fences.push_back({header});
                 }
                 if (event_eop->data_sel == DataSelect::Data32Low) {
-                    fences.push_back({header,
-                                      reinterpret_cast<VAddr>(event_eop->Address<void>()),
+                    fences.push_back({header, reinterpret_cast<VAddr>(event_eop->Address<void>()),
                                       event_eop->DataDWord()});
                 } else if (event_eop->data_sel == DataSelect::Data64) {
-                    fences.push_back({header,
-                                      reinterpret_cast<VAddr>(event_eop->Address<void>()),
+                    fences.push_back({header, reinterpret_cast<VAddr>(event_eop->Address<void>()),
                                       event_eop->DataQWord()});
                 }
                 break;
@@ -123,8 +120,7 @@ private:
                 if (wait_reg_mem->mem_space == PM4CmdWaitRegMem::MemSpace::Register) {
                     break;
                 }
-                const VAddr wait_addr =
-                    reinterpret_cast<VAddr>(wait_reg_mem->Address<void*>());
+                const VAddr wait_addr = reinterpret_cast<VAddr>(wait_reg_mem->Address<void*>());
                 const u32 mask = wait_reg_mem->mask;
                 const u32 reference = wait_reg_mem->ref;
                 using Function = PM4CmdWaitRegMem::Function;

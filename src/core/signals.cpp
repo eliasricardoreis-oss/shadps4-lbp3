@@ -139,7 +139,8 @@ void SignalHandler(int sig, siginfo_t* info, void* raw_context) {
         // CUSA00063 01.26's Game::Update normally calls GetLevelManager here. The built-in
         // direct-level patch replaces that call with UD2. Once the profile and manager are ready,
         // invoke the same high-level launcher used by the game UI with a known registered carrier
-        // slot. A later hook replaces only the final LaunchConfig LevelID, after progression lookup.
+        // slot. A later hook replaces only the final LaunchConfig LevelID, after progression
+        // lookup.
         if (code_address == reinterpret_cast<void*>(0x40bf01) &&
             MemoryPatcher::g_lbp3_direct_level) {
             const auto level = *MemoryPatcher::g_lbp3_direct_level;
@@ -154,13 +155,11 @@ void SignalHandler(int sig, siginfo_t* info, void* raw_context) {
             constexpr uintptr_t GameGlobal = 0x16ecd80;
             const u64 manager = *reinterpret_cast<const u64*>(ManagerGlobal);
             const u64 game = *reinterpret_cast<const u64*>(GameGlobal);
-            const bool profile_ready =
-                game != 0 && *reinterpret_cast<const u8*>(game + 0x4f5) != 0;
+            const bool profile_ready = game != 0 && *reinterpret_cast<const u8*>(game + 0x4f5) != 0;
             const bool manager_idle =
                 manager != 0 && *reinterpret_cast<const u32*>(manager + 0x1380) == 0;
             if (!profile_ready || !manager_idle) {
-                if (!lbp3_direct_level_wait_reported.exchange(true,
-                                                              std::memory_order_relaxed)) {
+                if (!lbp3_direct_level_wait_reported.exchange(true, std::memory_order_relaxed)) {
                     LOG_INFO(Debug,
                              "[LBP3_DIRECT_LEVEL] state=waiting profile_ready={} manager={:#x} "
                              "manager_idle={}",
@@ -209,8 +208,7 @@ void SignalHandler(int sig, siginfo_t* info, void* raw_context) {
             auto& state = reinterpret_cast<ucontext_t*>(raw_context)->uc_mcontext->__ss;
             const auto return_address = *reinterpret_cast<const u64*>(state.__rsp);
             if (return_address == 0x9436db &&
-                !lbp3_direct_level_loader_configured.exchange(true,
-                                                              std::memory_order_relaxed)) {
+                !lbp3_direct_level_loader_configured.exchange(true, std::memory_order_relaxed)) {
                 const auto* carrier = reinterpret_cast<const u32*>(state.__rsi);
                 const u32 carrier_type = carrier != nullptr ? carrier[0] : 0;
                 const u32 carrier_id = carrier != nullptr ? carrier[1] : 0;
@@ -219,8 +217,8 @@ void SignalHandler(int sig, siginfo_t* info, void* raw_context) {
                 LOG_INFO(Debug,
                          "[LBP3_DIRECT_LEVEL] state=loader target={}:{} adventure={}:{} "
                          "carrier={}:{} mode={} use_current_level={}",
-                         level.slot_type, level.slot_id, level.adventure_type,
-                         level.adventure_id, carrier_type, carrier_id, state.__rcx, state.__r9);
+                         level.slot_type, level.slot_id, level.adventure_type, level.adventure_id,
+                         carrier_type, carrier_id, state.__rcx, state.__r9);
             }
 
             state.__rsp -= sizeof(u64);
@@ -271,9 +269,8 @@ void SignalHandler(int sig, siginfo_t* info, void* raw_context) {
                 LOG_INFO(Debug,
                          "[LBP3_DIRECT_LEVEL] state=config target={}:{} adventure={}:{} mode={} "
                          "resolved_carrier={}:{}",
-                         level.slot_type, level.slot_id, level.adventure_type,
-                         level.adventure_id, state.__rcx, resolved_carrier_type,
-                         resolved_carrier_id);
+                         level.slot_type, level.slot_id, level.adventure_type, level.adventure_id,
+                         state.__rcx, resolved_carrier_type, resolved_carrier_id);
             }
 
             state.__rsp -= sizeof(u64);

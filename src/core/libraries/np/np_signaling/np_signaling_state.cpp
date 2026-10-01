@@ -692,8 +692,7 @@ void DispatchPeerActivatedEvent(s32 conn_id) {
     const s32 owner_ctx = conn_it->second.ctx_id;
     const auto owner_it = g_contexts.find(owner_ctx);
     if (owner_it != g_contexts.end() && owner_it->second.active) {
-        LOG_INFO(Lib_NpSignaling, "Connection {} -> PEER_ACTIVATED (ctxId={})", conn_id,
-                 owner_ctx);
+        LOG_INFO(Lib_NpSignaling, "Connection {} -> PEER_ACTIVATED (ctxId={})", conn_id, owner_ctx);
         StageBasicCallbackLocked(owner_it->second, owner_ctx, conn_id,
                                  ORBIS_NP_SIGNALING_EVENT_PEER_ACTIVATED, 0);
     }
@@ -861,9 +860,8 @@ bool AdoptRemoteGenerationLocked(ConnectionInfo& ci, u32 remote_conn_id) {
     ci.peer_established = false;
     ci.mutual_fired = false;
     if (previous_remote_conn_id != 0) {
-        LOG_INFO(Lib_NpSignaling,
-                 "Connection {} adopted new peer generation {} (previously {})", ci.conn_id,
-                 remote_conn_id, previous_remote_conn_id);
+        LOG_INFO(Lib_NpSignaling, "Connection {} adopted new peer generation {} (previously {})",
+                 ci.conn_id, remote_conn_id, previous_remote_conn_id);
         return true;
     }
     return false;
@@ -880,8 +878,7 @@ bool MarkPeerReactivatedLocked(ConnectionInfo& ci) {
 }
 
 bool IsCurrentRemoteGeneration(const ConnectionInfo& ci, u32 remote_conn_id) {
-    return remote_conn_id == 0 || ci.remote_conn_id == 0 ||
-           ci.remote_conn_id == remote_conn_id;
+    return remote_conn_id == 0 || ci.remote_conn_id == 0 || ci.remote_conn_id == remote_conn_id;
 }
 
 SignalingHandshake MakeHandshakeLocked(const ConnectionInfo& ci, HandshakeKind kind) {
@@ -1040,8 +1037,7 @@ void HandleHandshakePacket(u32 from_addr, u16 from_port, const SignalingHandshak
         }
 
         ConnectionInfo& ci = g_connections[conn_id];
-        if (kind != HandshakeKind::Offer &&
-            !IsCurrentRemoteGeneration(ci, pkt.from_conn_id)) {
+        if (kind != HandshakeKind::Offer && !IsCurrentRemoteGeneration(ci, pkt.from_conn_id)) {
             LOG_DEBUG(Lib_NpSignaling,
                       "Handshake[{}] ignored stale peer generation {} (current {}) kind={}",
                       conn_id, pkt.from_conn_id, ci.remote_conn_id, pkt.kind);

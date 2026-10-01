@@ -23,7 +23,7 @@ constexpr u64 QuadListIndexCount(u32 vertex_count) {
 // An incomplete final quad does not produce a primitive.
 template <typename Index>
 u32 ExpandQuadIndicesInPlace(std::span<Index> storage, u32 source_count,
-                            std::optional<Index> restart_index = std::nullopt) {
+                             std::optional<Index> restart_index = std::nullopt) {
     static_assert(std::is_same_v<Index, u16> || std::is_same_v<Index, u32>);
     const u64 output_count = QuadListIndexCount(source_count);
     if (output_count > storage.size() || output_count > std::numeric_limits<u32>::max()) {
@@ -40,8 +40,8 @@ u32 ExpandQuadIndicesInPlace(std::span<Index> storage, u32 source_count,
     }
     for (u32 quad = source_count / 4; quad > 0; --quad) {
         const u32 src = (quad - 1) * 4;
-        const std::array<Index, 4> vertices{
-            storage[src], storage[src + 1], storage[src + 2], storage[src + 3]};
+        const std::array<Index, 4> vertices{storage[src], storage[src + 1], storage[src + 2],
+                                            storage[src + 3]};
         const u32 dst = (quad - 1) * 6;
         storage[dst] = vertices[1];
         storage[dst + 1] = vertices[2];

@@ -23,25 +23,39 @@ constexpr std::string_view Header =
 
 std::string_view SourceName(GpuWaitSource source) {
     switch (source) {
-    case GpuWaitSource::StreamReuse: return "stream_reuse";
-    case GpuWaitSource::SchedulerFinish: return "scheduler_finish";
-    case GpuWaitSource::CommandPool: return "command_pool";
-    case GpuWaitSource::DescriptorRetirement: return "descriptor_retirement";
-    case GpuWaitSource::FaultBufferReuse: return "fault_buffer_reuse";
-    case GpuWaitSource::PriorityCallback: return "priority_callback";
-    default: return "unspecified";
+    case GpuWaitSource::StreamReuse:
+        return "stream_reuse";
+    case GpuWaitSource::SchedulerFinish:
+        return "scheduler_finish";
+    case GpuWaitSource::CommandPool:
+        return "command_pool";
+    case GpuWaitSource::DescriptorRetirement:
+        return "descriptor_retirement";
+    case GpuWaitSource::FaultBufferReuse:
+        return "fault_buffer_reuse";
+    case GpuWaitSource::PriorityCallback:
+        return "priority_callback";
+    default:
+        return "unspecified";
     }
 }
 
 std::string_view ResourceName(GpuWaitResource resource) {
     switch (resource) {
-    case GpuWaitResource::UploadStaging: return "upload_staging";
-    case GpuWaitResource::UniformStream: return "uniform_stream";
-    case GpuWaitResource::QuadIndex: return "quad_index";
-    case GpuWaitResource::Download: return "download";
-    case GpuWaitResource::DeviceUtility: return "device_utility";
-    case GpuWaitResource::TileScratch: return "tile_scratch";
-    default: return "unspecified";
+    case GpuWaitResource::UploadStaging:
+        return "upload_staging";
+    case GpuWaitResource::UniformStream:
+        return "uniform_stream";
+    case GpuWaitResource::QuadIndex:
+        return "quad_index";
+    case GpuWaitResource::Download:
+        return "download";
+    case GpuWaitResource::DeviceUtility:
+        return "device_utility";
+    case GpuWaitResource::TileScratch:
+        return "tile_scratch";
+    default:
+        return "unspecified";
     }
 }
 
@@ -64,9 +78,8 @@ void Location(std::ostream& out, const std::source_location& location) {
 }
 } // namespace
 
-ScopedGpuWait::ScopedGpuWait(u64 timeline_id, u64 target_tick, u64 known_gpu_tick,
-                              u64 current_tick, const GpuWaitInfo& info,
-                              std::source_location caller) noexcept
+ScopedGpuWait::ScopedGpuWait(u64 timeline_id, u64 target_tick, u64 known_gpu_tick, u64 current_tick,
+                             const GpuWaitInfo& info, std::source_location caller) noexcept
     : active{IsEnabled()} {
     if (!active) {
         return;
@@ -106,7 +119,7 @@ GpuWaitLog::~GpuWaitLog() {
 }
 
 bool GpuWaitLog::Open(const std::filesystem::path& csv, GpuWaitEvent::Clock::time_point start,
-                       size_t limit) {
+                      size_t limit) {
     Close();
     if (limit < Header.size() + 4096 || limit > FileLimit) {
         return false;
@@ -225,8 +238,8 @@ void GpuWaitLog::Drain() {
             << ',' << event.target_tick << ',' << event.known_gpu_tick << ',' << event.current_tick
             << ',' << SourceName(event.info.source) << ',' << ResourceName(event.info.resource)
             << ',' << event.info.resource_id << ',' << event.info.capacity_bytes << ','
-            << event.info.request_bytes << ',' << event.info.offset_bytes << ',' << event.context_bits
-            << ',' << event.image_address << ',' << event.image_bytes << ',';
+            << event.info.request_bytes << ',' << event.info.offset_bytes << ','
+            << event.context_bits << ',' << event.image_address << ',' << event.image_bytes << ',';
         Location(row, event.caller);
         row << ',';
         Location(row, event.texture_lock_site);

@@ -9,15 +9,15 @@
 #include "core/debug_state.h"
 #include "core/devtools/layer.h"
 #include "core/emulator_settings.h"
-#include "core/performance_telemetry.h"
 #include "core/libraries/system/systemservice.h"
+#include "core/performance_telemetry.h"
 #include "imgui/friends_layer.h"
 #include "imgui/invitation_prompt_layer.h"
-#include "input/profile_menu.h"
 #include "imgui/notifications_layer.h"
 #include "imgui/renderer/imgui_core.h"
 #include "imgui/renderer/imgui_impl_vulkan.h"
 #include "imgui/shadnet_notifications_layer.h"
+#include "input/profile_menu.h"
 #include "sdl_window.h"
 #include "video_core/buffer_cache/buffer.h"
 #include "video_core/renderdoc.h"
@@ -500,8 +500,7 @@ Presenter::Presenter(Frontend::WindowSDL& window_, AmdGpu::Liverpool* liverpool_
       instance{window, EmulatorSettings.GetGpuId(), EmulatorSettings.IsVkValidationEnabled(),
                EmulatorSettings.IsVkCrashDiagnosticEnabled()},
       draw_scheduler{instance, "draw"}, present_scheduler{instance, "present"},
-      flip_scheduler{instance, "cpu_flip"},
-      swapchain{instance, window},
+      flip_scheduler{instance, "cpu_flip"}, swapchain{instance, window},
       rasterizer{std::make_unique<Rasterizer>(instance, draw_scheduler, liverpool)},
       texture_cache{rasterizer->GetTextureCache()} {
     const u32 num_images = swapchain.GetImageCount();

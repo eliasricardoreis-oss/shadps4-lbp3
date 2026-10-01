@@ -11,8 +11,8 @@
 #include <utility>
 #include <vector>
 #include <CLI/CLI.hpp>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_messagebox.h>
 
 #include "common/arch.h"
 #include "common/key_manager.h"
@@ -28,9 +28,9 @@
 #include "core/performance_telemetry.h"
 #include "core/user_settings.h"
 #include "emulator.h"
+#include "imgui/big_picture/big_picture.h"
 #include "input/input_movie.h"
 #include "video_core/renderdoc.h"
-#include "imgui/big_picture/big_picture.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -206,8 +206,7 @@ int main(int argc, char* argv[]) {
             lbp3DirectLevelStr = direct_level;
         }
     }
-    if (lbp3DirectLevelStr &&
-        !MemoryPatcher::ConfigureLbp3DirectLevel(*lbp3DirectLevelStr)) {
+    if (lbp3DirectLevelStr && !MemoryPatcher::ConfigureLbp3DirectLevel(*lbp3DirectLevelStr)) {
         LOG_ERROR(Debug,
                   "Invalid --lbp3-direct-level value '{}'; expected "
                   "slot_type:slot_id[:adventure_type:adventure_id]",
@@ -263,11 +262,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     std::string input_error;
-    if (!Input::Movie::Configure(input_record, input_replay, input_report, [] {
-            SDL_Event event{};
-            event.type = SDL_EVENT_QUIT;
-            SDL_PushEvent(&event);
-        }, [] { VideoCore::RequestScreenshot(VideoCore::ScreenshotRequest::GameOnly); }, input_error)) {
+    if (!Input::Movie::Configure(
+            input_record, input_replay, input_report,
+            [] {
+                SDL_Event event{};
+                event.type = SDL_EVENT_QUIT;
+                SDL_PushEvent(&event);
+            },
+            [] { VideoCore::RequestScreenshot(VideoCore::ScreenshotRequest::GameOnly); },
+            input_error)) {
         std::cerr << input_error << '\n';
         return 1;
     }

@@ -423,8 +423,8 @@ int PS4_SYSV_ABI sceNetCtlRegisterCallback(OrbisNetCtlCallback func, void* arg, 
     if (!func || !cid) {
         return ORBIS_NET_CTL_ERROR_INVALID_ADDR;
     }
-    LOG_INFO(Lib_NetCtl, "called, callback = {}, arg = {}",
-             reinterpret_cast<const void*>(func), arg);
+    LOG_INFO(Lib_NetCtl, "called, callback = {}, arg = {}", reinterpret_cast<const void*>(func),
+             arg);
     s32 result = netctl.RegisterCallback(func, arg);
     if (result < 0) {
         return result;

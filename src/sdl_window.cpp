@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2024-2026 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <memory>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_init.h>
@@ -8,7 +9,6 @@
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <cmrc/cmrc.hpp>
-#include <memory>
 #include <stb_image.h>
 
 #include "common/assert.h"
@@ -131,12 +131,12 @@ void ScheduleLbp3DirectLevelBootstrap() {
     // The direct loader bypasses the Pod Computer and all planet UI, but LBP3 still needs one
     // Cross press to leave its boot movie and finish creating the local profile.
     constexpr Uint32 BootstrapDelayMs = 50'000;
-    SDL_AddTimer(BootstrapDelayMs, &PushLbp3DirectLevelPadInput,
-                 new Lbp3DirectLevelPadInput{.button = OrbisPadButtonDataOffset::Cross,
-                                             .down = true});
-    SDL_AddTimer(BootstrapDelayMs + 250, &PushLbp3DirectLevelPadInput,
-                 new Lbp3DirectLevelPadInput{.button = OrbisPadButtonDataOffset::Cross,
-                                             .down = false});
+    SDL_AddTimer(
+        BootstrapDelayMs, &PushLbp3DirectLevelPadInput,
+        new Lbp3DirectLevelPadInput{.button = OrbisPadButtonDataOffset::Cross, .down = true});
+    SDL_AddTimer(
+        BootstrapDelayMs + 250, &PushLbp3DirectLevelPadInput,
+        new Lbp3DirectLevelPadInput{.button = OrbisPadButtonDataOffset::Cross, .down = false});
     LOG_INFO(Debug,
              "[LBP3_DIRECT_LEVEL] bootstrap scheduled at {} ms; level selection uses the guest "
              "high-level launcher",
@@ -286,7 +286,8 @@ void WindowSDL::WaitEvent() {
         return;
     }
 
-    if (Input::Profiles::ProcessEvent(event)) return;
+    if (Input::Profiles::ProcessEvent(event))
+        return;
 
     if (!Input::Profiles::IsOpen() && Libraries::Mouse::PushSDLEvent(event)) {
         return;
@@ -297,7 +298,8 @@ void WindowSDL::WaitEvent() {
     }
     if (Input::Profiles::IsOpen() &&
         (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP ||
-         event.type == SDL_EVENT_MOUSE_WHEEL || event.type == SDL_EVENT_MOUSE_WHEEL_OFF)) return;
+         event.type == SDL_EVENT_MOUSE_WHEEL || event.type == SDL_EVENT_MOUSE_WHEEL_OFF))
+        return;
 
     switch (event.type) {
     case SDL_EVENT_WINDOW_RESIZED:
@@ -491,7 +493,8 @@ void WindowSDL::OnKeyboardMouseInput(const SDL_Event* event) {
 
 void WindowSDL::OnGamepadEvent(const SDL_Event* event) {
     // SDL may still deliver queued events for a removed or unassigned device.
-    if (controllers.GetGamepadIndexFromJoystickId(event->gbutton.which) >= 4) return;
+    if (controllers.GetGamepadIndexFromJoystickId(event->gbutton.which) >= 4)
+        return;
     bool input_down = event->type == SDL_EVENT_GAMEPAD_AXIS_MOTION ||
                       event->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN;
     Input::InputEvent input_event = Input::InputBinding::GetInputEventFromSDLEvent(*event);

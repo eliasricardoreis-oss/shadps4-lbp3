@@ -155,8 +155,7 @@ struct P2PSocket : public Socket, public std::enable_shared_from_this<P2PSocket>
         return inner.Accept(addr, addrlen);
     }
     int ReceiveMessage(OrbisNetMsghdr* msg, int flags) override;
-    int ReceivePacket(void* buf, u32 len, int flags, OrbisNetSockaddr* from,
-                      u32* fromlen) override;
+    int ReceivePacket(void* buf, u32 len, int flags, OrbisNetSockaddr* from, u32* fromlen) override;
     int Connect(const OrbisNetSockaddr* addr, u32 namelen) override;
     int GetSocketAddress(OrbisNetSockaddr* name, u32* namelen) override;
     int GetPeerName(OrbisNetSockaddr* addr, u32* namelen) override;

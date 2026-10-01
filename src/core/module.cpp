@@ -51,38 +51,38 @@ static void ApplyLbp3SpuPointerFix(MemoryManager* memory, std::string_view modul
         return;
     }
 
-    const auto apply_patch =
-        [memory, module_base](VAddr offset, std::span<const u8> expected,
-                              std::span<const u8> replacement, std::string_view description) {
-            ASSERT(expected.size() == replacement.size());
-            void* const patch_address = reinterpret_cast<void*>(module_base + offset);
-            if (std::memcmp(patch_address, expected.data(), expected.size()) != 0) {
-                LOG_ERROR(Core_Linker, "LBP3 {} skipped: unexpected bytes", description);
-                return false;
-            }
-            if (!memory->TryWriteBacking(patch_address, replacement.data(), replacement.size())) {
-                LOG_ERROR(Core_Linker, "LBP3 {} failed to write", description);
-                return false;
-            }
-            LOG_INFO(Core_Linker, "Applied LBP3 {}", description);
-            return true;
-        };
+    const auto apply_patch = [memory, module_base](VAddr offset, std::span<const u8> expected,
+                                                   std::span<const u8> replacement,
+                                                   std::string_view description) {
+        ASSERT(expected.size() == replacement.size());
+        void* const patch_address = reinterpret_cast<void*>(module_base + offset);
+        if (std::memcmp(patch_address, expected.data(), expected.size()) != 0) {
+            LOG_ERROR(Core_Linker, "LBP3 {} skipped: unexpected bytes", description);
+            return false;
+        }
+        if (!memory->TryWriteBacking(patch_address, replacement.data(), replacement.size())) {
+            LOG_ERROR(Core_Linker, "LBP3 {} failed to write", description);
+            return false;
+        }
+        LOG_INFO(Core_Linker, "Applied LBP3 {}", description);
+        return true;
+    };
 
     // LBP3 01.26's SDK 1.70 spu.prx reloads two system-managed counter pointers with 32-bit MOVs
     // immediately before atomic XADDs. shadPS4 can map those counters above 4 GiB on Windows, so
     // the reload truncates the pointer and crashes in EndPoints. Preserve the complete pointer in
     // both control-flow paths.
-    static constexpr std::array<u8, 12> FirstExpected = {
-        0x8b, 0x85, 0x08, 0xfe, 0xff, 0xff, 0x41, 0xb8, 0x01, 0x00, 0x00, 0x00};
-    static constexpr std::array<u8, 12> FirstReplacement = {
-        0x48, 0x8b, 0x85, 0x08, 0xfe, 0xff, 0xff, 0x6a, 0x01, 0x41, 0x58, 0x90};
-    static constexpr std::array<u8, 12> SecondExpected = {
-        0x8b, 0x85, 0x08, 0xfe, 0xff, 0xff, 0x41, 0xbf, 0x01, 0x00, 0x00, 0x00};
-    static constexpr std::array<u8, 12> SecondReplacement = {
-        0x48, 0x8b, 0x85, 0x08, 0xfe, 0xff, 0xff, 0x6a, 0x01, 0x41, 0x5f, 0x90};
+    static constexpr std::array<u8, 12> FirstExpected = {0x8b, 0x85, 0x08, 0xfe, 0xff, 0xff,
+                                                         0x41, 0xb8, 0x01, 0x00, 0x00, 0x00};
+    static constexpr std::array<u8, 12> FirstReplacement = {0x48, 0x8b, 0x85, 0x08, 0xfe, 0xff,
+                                                            0xff, 0x6a, 0x01, 0x41, 0x58, 0x90};
+    static constexpr std::array<u8, 12> SecondExpected = {0x8b, 0x85, 0x08, 0xfe, 0xff, 0xff,
+                                                          0x41, 0xbf, 0x01, 0x00, 0x00, 0x00};
+    static constexpr std::array<u8, 12> SecondReplacement = {0x48, 0x8b, 0x85, 0x08, 0xfe, 0xff,
+                                                             0xff, 0x6a, 0x01, 0x41, 0x5f, 0x90};
 
-    const bool first = apply_patch(0x9f7f, FirstExpected, FirstReplacement,
-                                   "01.26 SPU counter pointer reload #1");
+    const bool first =
+        apply_patch(0x9f7f, FirstExpected, FirstReplacement, "01.26 SPU counter pointer reload #1");
     const bool second = apply_patch(0xa5fa, SecondExpected, SecondReplacement,
                                     "01.26 SPU counter pointer reload #2");
     if (first != second) {
@@ -184,8 +184,8 @@ void Module::LoadModuleToMemory(u32& max_tls_index) {
         }
         base_virtual_addr = 0;
         result = memory->MapMemory(out_addr, ModuleLoadBase, aligned_base_size + TrampolineSize,
-                                   MemoryProt::NoAccess, MemoryMapFlags::NoFlags,
-                                   VMAType::Reserved, name);
+                                   MemoryProt::NoAccess, MemoryMapFlags::NoFlags, VMAType::Reserved,
+                                   name);
         LOG_WARNING(Core_Linker,
                     "Unable to map {} at hardware address {:#x}; falling back to {:#x}", name,
                     HardwareEbootLoadBase, base_virtual_addr);

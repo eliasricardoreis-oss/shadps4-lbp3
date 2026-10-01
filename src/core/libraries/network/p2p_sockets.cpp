@@ -406,8 +406,7 @@ int P2PSocket::SendMessage(const OrbisNetMsghdr* msg, int flags) {
                       flags, destination, destination != nullptr ? msg->msg_namelen : 0);
 }
 
-int P2PSocket::ReceivePacket(void* buf, u32 len, int flags, OrbisNetSockaddr* from,
-                             u32* fromlen) {
+int P2PSocket::ReceivePacket(void* buf, u32 len, int flags, OrbisNetSockaddr* from, u32* fromlen) {
     if (socket_type != ORBIS_NET_SOCK_DGRAM_P2P) {
         return inner.ReceivePacket(buf, len, flags, from, fromlen);
     }
@@ -498,10 +497,10 @@ int P2PSocket::ReceiveMessage(OrbisNetMsghdr* msg, int flags) {
 
     std::vector<u8> payload(capacity);
     u32 source_len = msg->msg_name != nullptr ? msg->msg_namelen : 0;
-    const int received = ReceivePacket(
-        payload.empty() ? nullptr : payload.data(), static_cast<u32>(payload.size()), flags,
-        static_cast<OrbisNetSockaddr*>(msg->msg_name),
-        msg->msg_name != nullptr ? &source_len : nullptr);
+    const int received =
+        ReceivePacket(payload.empty() ? nullptr : payload.data(), static_cast<u32>(payload.size()),
+                      flags, static_cast<OrbisNetSockaddr*>(msg->msg_name),
+                      msg->msg_name != nullptr ? &source_len : nullptr);
     if (received < 0) {
         return received;
     }

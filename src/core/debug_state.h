@@ -228,8 +228,8 @@ public:
         const s32 visible_until =
             shader_compile_visible_until_frame.load(std::memory_order_acquire);
         return {
-            .kind = static_cast<ShaderCompileKind>(
-                shader_compile_kind.load(std::memory_order_relaxed)),
+            .kind =
+                static_cast<ShaderCompileKind>(shader_compile_kind.load(std::memory_order_relaxed)),
             .serial = shader_compile_serial.load(std::memory_order_relaxed),
             .active_count = active,
             .visible = active != 0 || (visible_until >= 0 && current_frame <= visible_until),

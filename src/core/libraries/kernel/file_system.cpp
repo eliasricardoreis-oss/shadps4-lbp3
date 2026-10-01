@@ -882,69 +882,70 @@ s32 PS4_SYSV_ABI sceKernelFtruncate(s32 fd, s64 length) {
 
 s32 PS4_SYSV_ABI posix_rename(const char* from, const char* to) {
     try {
-    auto* mnt = Common::Singleton<Core::FileSys::MntPoints>::Instance();
-    bool ro = false;
-    const auto src_path = mnt->GetHostPath(from, &ro);
-    if (strlen(from) > 255) {
-        *__Error() = POSIX_ENAMETOOLONG;
-        return -1;
-    }
-    if (strlen(to) > 255) {
-        *__Error() = POSIX_ENAMETOOLONG;
-        return -1;
-    }
-    if (!fs::exists(src_path)) {
-        *__Error() = POSIX_ENOENT;
-        return -1;
-    }
-    if (ro) {
-        *__Error() = POSIX_EROFS;
-        return -1;
-    }
-    const auto dst_path = mnt->GetHostPath(to, &ro);
-    if (ro) {
-        *__Error() = POSIX_EROFS;
-        return -1;
-    }
-    const bool src_is_dir = fs::is_directory(src_path);
-    const bool dst_is_dir = fs::is_directory(dst_path);
+        auto* mnt = Common::Singleton<Core::FileSys::MntPoints>::Instance();
+        bool ro = false;
+        const auto src_path = mnt->GetHostPath(from, &ro);
+        if (strlen(from) > 255) {
+            *__Error() = POSIX_ENAMETOOLONG;
+            return -1;
+        }
+        if (strlen(to) > 255) {
+            *__Error() = POSIX_ENAMETOOLONG;
+            return -1;
+        }
+        if (!fs::exists(src_path)) {
+            *__Error() = POSIX_ENOENT;
+            return -1;
+        }
+        if (ro) {
+            *__Error() = POSIX_EROFS;
+            return -1;
+        }
+        const auto dst_path = mnt->GetHostPath(to, &ro);
+        if (ro) {
+            *__Error() = POSIX_EROFS;
+            return -1;
+        }
+        const bool src_is_dir = fs::is_directory(src_path);
+        const bool dst_is_dir = fs::is_directory(dst_path);
 
-    if (fs::exists(dst_path)) {
-        if (src_is_dir && !dst_is_dir) {
-            *__Error() = POSIX_ENOTDIR;
-            return -1;
+        if (fs::exists(dst_path)) {
+            if (src_is_dir && !dst_is_dir) {
+                *__Error() = POSIX_ENOTDIR;
+                return -1;
+            }
+            if (!src_is_dir && dst_is_dir) {
+                *__Error() = POSIX_EISDIR;
+                return -1;
+            }
+            if (dst_is_dir && !fs::is_empty(dst_path)) {
+                *__Error() = POSIX_ENOTEMPTY;
+                return -1;
+            }
         }
-        if (!src_is_dir && dst_is_dir) {
-            *__Error() = POSIX_EISDIR;
-            return -1;
-        }
-        if (dst_is_dir && !fs::is_empty(dst_path)) {
-            *__Error() = POSIX_ENOTEMPTY;
-            return -1;
-        }
-    }
 
-    // On Windows, fs::rename will error if the file has been opened before, so retain the
-    // copy-and-remove fallback there. POSIX hosts must use the native atomic rename: recursively
-    // walking a directory is observably different and can race internal save-data backups.
+        // On Windows, fs::rename will error if the file has been opened before, so retain the
+        // copy-and-remove fallback there. POSIX hosts must use the native atomic rename:
+        // recursively walking a directory is observably different and can race internal save-data
+        // backups.
 #ifdef _WIN32
-    fs::copy(src_path, dst_path,
-             fs::copy_options::overwrite_existing | fs::copy_options::recursive);
+        fs::copy(src_path, dst_path,
+                 fs::copy_options::overwrite_existing | fs::copy_options::recursive);
 #else
-    fs::rename(src_path, dst_path);
+        fs::rename(src_path, dst_path);
 #endif
-    auto* h = Common::Singleton<Core::FileSys::HandleTable>::Instance();
-    auto file = h->GetFile(src_path);
-    if (file) {
-        auto access_mode = file->f.GetAccessMode();
-        file->f.Close();
-        fs::remove(src_path);
-        file->f.Open(dst_path, access_mode);
-    } else {
-        fs::remove_all(src_path);
-    }
+        auto* h = Common::Singleton<Core::FileSys::HandleTable>::Instance();
+        auto file = h->GetFile(src_path);
+        if (file) {
+            auto access_mode = file->f.GetAccessMode();
+            file->f.Close();
+            fs::remove(src_path);
+            file->f.Open(dst_path, access_mode);
+        } else {
+            fs::remove_all(src_path);
+        }
 
-    return ORBIS_OK;
+        return ORBIS_OK;
     } catch (const fs::filesystem_error& err) {
         // POSIX APIs report filesystem failures to the guest; an implementation detail must not
         // unwind through guest code and terminate the whole emulator.

@@ -115,7 +115,7 @@ std::size_t CommandPool::ManageOverflow() {
     Core::PerfTelemetry::ScopedTimer telemetry_timer{
         Core::PerfTelemetry::TimeMetric::CommandPoolWait};
     master_semaphore->Wait(*oldest, {.source = Core::PerfTelemetry::GpuWaitSource::CommandPool,
-                                    .resource_id = reinterpret_cast<u64>(this)});
+                                     .resource_id = reinterpret_cast<u64>(this)});
     return std::distance(ticks.begin(), oldest);
 }
 

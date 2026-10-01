@@ -338,8 +338,7 @@ enum class InterruptSelect : u32 {
 };
 
 constexpr bool SelectsInterrupt(InterruptSelect select) {
-    return select == InterruptSelect::IrqOnly ||
-           select == InterruptSelect::IrqWhenWriteConfirm;
+    return select == InterruptSelect::IrqOnly || select == InterruptSelect::IrqWhenWriteConfirm;
 }
 
 static u64 GetGpuClock64() {

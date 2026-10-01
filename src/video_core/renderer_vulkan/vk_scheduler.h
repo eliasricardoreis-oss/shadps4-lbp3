@@ -11,8 +11,8 @@
 #include "common/unique_function.h"
 #include "video_core/amdgpu/regs_color.h"
 #include "video_core/amdgpu/regs_primitive.h"
-#include "video_core/renderer_vulkan/vk_master_semaphore.h"
 #include "video_core/renderer_vulkan/vk_gpu_timing.h"
+#include "video_core/renderer_vulkan/vk_master_semaphore.h"
 #include "video_core/renderer_vulkan/vk_resource_pool.h"
 
 namespace tracy {
@@ -396,7 +396,8 @@ public:
         return gpu_timing.BeginWork(CommandBuffer(), work);
     }
     void EndGpuWork(GpuTiming::Token token) {
-        if (current_cmdbuf) gpu_timing.EndWork(current_cmdbuf, token);
+        if (current_cmdbuf)
+            gpu_timing.EndWork(current_cmdbuf, token);
     }
     bool IsTimingRenderPass() const {
         return gpu_timing.IsTimingRenderPass();

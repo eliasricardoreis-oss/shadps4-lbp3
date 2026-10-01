@@ -287,8 +287,8 @@ bool OpenSocketLocked(BridgeState& state) {
     }
 #endif
     if (!state.service_thread.joinable()) {
-        state.service_thread = std::jthread(
-            [&state](std::stop_token stop_token) { ServiceLoop(state, stop_token); });
+        state.service_thread =
+            std::jthread([&state](std::stop_token stop_token) { ServiceLoop(state, stop_token); });
         LOG_INFO(Lib_Net, "Started independent LBP3 helper bridge service");
     }
     return true;
@@ -615,8 +615,7 @@ void MaybeQueueFindBestRoom() {
     }
 
     std::unique_lock join_lock{state.find_best_room_mutex, std::try_to_lock};
-    if (!join_lock.owns_lock() ||
-        state.find_best_room_queued.load(std::memory_order_acquire)) {
+    if (!join_lock.owns_lock() || state.find_best_room_queued.load(std::memory_order_acquire)) {
         return;
     }
 

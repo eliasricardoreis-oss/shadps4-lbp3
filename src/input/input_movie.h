@@ -22,13 +22,16 @@ struct Pad {
     std::array<float, 3> acceleration{}, angular_velocity{};
     u32 touch_held{};
     u8 touch_count{}, reserved[3]{};
-    struct Touch { u16 x{}, y{}; u8 id{}, reserved[3]{}; } touches[2];
+    struct Touch {
+        u16 x{}, y{};
+        u8 id{}, reserved[3]{};
+    } touches[2];
     u32 reserved2{};
     u64 timestamp{};
 };
 static_assert(sizeof(Pad) == 88);
 struct Header {
-    std::array<char, 8> magic{'S','H','A','D','P','A','D','1'};
+    std::array<char, 8> magic{'S', 'H', 'A', 'D', 'P', 'A', 'D', '1'};
     u32 version{1}, header_size{64}, event_size{112}, slots{5};
     u64 start_unix_ns{}, start_steady_ns{}, reserved[3]{};
 };
@@ -56,11 +59,12 @@ public:
     void Stop();
     void Flip();
     void Record(u32 slot, std::span<const Libraries::Pad::OrbisPadData> data);
-    std::optional<int> Read(u32 slot, Libraries::Pad::OrbisPadData* data, int capacity,
-                            bool latest, u64 timestamp);
+    std::optional<int> Read(u32 slot, Libraries::Pad::OrbisPadData* data, int capacity, bool latest,
+                            u64 timestamp);
     bool Connection(u32 slot, bool& connected, u8& count);
     bool Replaying() const;
     u64 Frame() const;
+
 private:
     struct Impl;
     std::unique_ptr<Impl> impl;
@@ -76,7 +80,7 @@ bool Replaying() noexcept;
 void Stop();
 void Flip();
 void Record(u32 slot, std::span<const Libraries::Pad::OrbisPadData> data);
-std::optional<int> Read(u32 slot, Libraries::Pad::OrbisPadData* data, int capacity,
-                        bool latest, u64 timestamp);
+std::optional<int> Read(u32 slot, Libraries::Pad::OrbisPadData* data, int capacity, bool latest,
+                        u64 timestamp);
 bool Connection(u32 slot, bool& connected, u8& count);
 } // namespace Input::Movie

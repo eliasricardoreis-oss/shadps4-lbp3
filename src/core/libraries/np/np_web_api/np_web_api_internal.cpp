@@ -776,8 +776,7 @@ s32 sendRequest(s64 requestId, s32 partIndex, const void* pData, u64 dataSize, s
     NpManager::OrbisNpState np_state = NpManager::OrbisNpState::Unknown;
     const s32 np_state_result = NpManager::sceNpGetState(user_context->userId, &np_state);
     if (np_state_result < ORBIS_OK || np_state != NpManager::OrbisNpState::SignedIn) {
-        LOG_WARNING(Lib_NpWebApi,
-                    "WebAPI request rejected: userId={} NP result={:#x} state={}",
+        LOG_WARNING(Lib_NpWebApi, "WebAPI request rejected: userId={} NP result={:#x} state={}",
                     user_context->userId, np_state_result, static_cast<u32>(np_state));
         releaseRequest(request);
         releaseUserContext(user_context);

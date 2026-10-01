@@ -35,9 +35,14 @@ static Vulkan::GpuTiming::Work TimingWork(const ImageInfo& info, bool tiler) {
     return {.kind = tiler ? Vulkan::GpuTiming::Kind::Tile : Vulkan::GpuTiming::Kind::Detile,
             .address = info.guest_address,
             .bytes = info.guest_size,
-            .width = info.size.width, .height = info.size.height, .depth = info.size.depth,
-            .pitch = info.pitch, .bits = info.num_bits, .tile_mode = u32(info.tile_mode),
-            .mips = info.guest_resources.levels, .layers = info.guest_resources.layers};
+            .width = info.size.width,
+            .height = info.size.height,
+            .depth = info.size.depth,
+            .pitch = info.pitch,
+            .bits = info.num_bits,
+            .tile_mode = u32(info.tile_mode),
+            .mips = info.guest_resources.levels,
+            .layers = info.guest_resources.layers};
 }
 
 static u32 GetMacroMipMask(const ImageInfo& info, u32 num_mips) {
@@ -45,8 +50,8 @@ static u32 GetMacroMipMask(const ImageInfo& info, u32 num_mips) {
         return 0;
     }
 
-    const auto [pitch_align, height_align] = GetMacroTileExtents(
-        info.tile_mode, info.num_bits, info.num_samples, info.alt_tile);
+    const auto [pitch_align, height_align] =
+        GetMacroTileExtents(info.tile_mode, info.num_bits, info.num_samples, info.alt_tile);
     ASSERT(pitch_align != 0 && height_align != 0);
 
     u32 mask = 0;
@@ -243,10 +248,10 @@ TileManager::Result TileManager::DetileImage(vk::Buffer in_buffer, u32 in_offset
 
     const auto scratch = GetScratchBuffer(info.guest_size);
     if (scratch.allocation != VK_NULL_HANDLE) {
-        scheduler.DeferOperation([this, buffer = scratch.buffer,
-                                  allocation = scratch.allocation]() {
-            vmaDestroyBuffer(instance.GetAllocator(), buffer, allocation);
-        });
+        scheduler.DeferOperation(
+            [this, buffer = scratch.buffer, allocation = scratch.allocation]() {
+                vmaDestroyBuffer(instance.GetAllocator(), buffer, allocation);
+            });
     }
 
     scheduler.EndRendering();
@@ -334,10 +339,10 @@ void TileManager::TileImage(Image& in_image, std::span<vk::BufferImageCopy> buff
 
     const auto scratch = GetScratchBuffer(info.guest_size);
     if (scratch.allocation != VK_NULL_HANDLE) {
-        scheduler.DeferOperation([this, buffer = scratch.buffer,
-                                  allocation = scratch.allocation]() {
-            vmaDestroyBuffer(instance.GetAllocator(), buffer, allocation);
-        });
+        scheduler.DeferOperation(
+            [this, buffer = scratch.buffer, allocation = scratch.allocation]() {
+                vmaDestroyBuffer(instance.GetAllocator(), buffer, allocation);
+            });
     }
 
     const auto cmdbuf = scheduler.CommandBuffer();

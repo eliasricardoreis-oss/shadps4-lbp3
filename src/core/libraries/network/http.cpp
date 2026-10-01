@@ -137,8 +137,7 @@ static bool IsLbp3HelperRequest(const HttpRequest& req) {
 }
 
 static bool IsLbp3LoginUrl(std::string_view url) {
-    return Core::Lbp3Online::IsSupportedTitle() &&
-           url.contains("/LITTLEBIGPLANETPS3_XML/login");
+    return Core::Lbp3Online::IsSupportedTitle() && url.contains("/LITTLEBIGPLANETPS3_XML/login");
 }
 
 // The login response is parsed by the game after libSceHttp has handed the complete body back.
@@ -171,13 +170,13 @@ static void StartLbp3LoginStateWatcher() {
         // returns 1 or 3 it advances without that success byte and the +0x2f0 watchdog later
         // tears the whole online stack down.  Keep this probe deliberately narrow so the exact
         // failing child can be identified without enabling the general performance telemetry.
-        constexpr uintptr_t ManagerOuterStateOffset = 0x0130d9a4; // manager + 0x2ec
-        constexpr uintptr_t ManagerWatchdogOffset = 0x0130d9a8;   // manager + 0x2f0
-        constexpr uintptr_t ManagerSuccessFlagOffset = 0x0130d9f0; // manager + 0x338
+        constexpr uintptr_t ManagerOuterStateOffset = 0x0130d9a4;       // manager + 0x2ec
+        constexpr uintptr_t ManagerWatchdogOffset = 0x0130d9a8;         // manager + 0x2f0
+        constexpr uintptr_t ManagerSuccessFlagOffset = 0x0130d9f0;      // manager + 0x338
         constexpr uintptr_t ManagerLocalGatePointerOffset = 0x0130d6e8; // manager + 0x30
-        constexpr uintptr_t ManagerWatchdogGateOffset = 0x0130da20; // manager + 0x368
-        constexpr uintptr_t ManagerChildStatesOffset = 0x0130d794; // manager + 0xdc
-        constexpr uintptr_t ManagerChildHandlersOffset = 0x0130d800; // manager + 0x148
+        constexpr uintptr_t ManagerWatchdogGateOffset = 0x0130da20;     // manager + 0x368
+        constexpr uintptr_t ManagerChildStatesOffset = 0x0130d794;      // manager + 0xdc
+        constexpr uintptr_t ManagerChildHandlersOffset = 0x0130d800;    // manager + 0x148
         constexpr size_t ManagerChildCount = 26;
         // CUSA00063 v1.26: the NP/session singleton used after the legacy XML bootstrap.  Its
         // /v1/sessions callback writes substate 3 on success and substate 2 on failure.  Watching
@@ -190,7 +189,8 @@ static void StartLbp3LoginStateWatcher() {
         constexpr uintptr_t SessionFlagOffset = 0x0119a850;
         const uintptr_t base = MemoryPatcher::g_eboot_address;
         const auto* state = reinterpret_cast<const volatile u32*>(base + LoginStateOffset);
-        const auto* generation = reinterpret_cast<const volatile u32*>(base + LoginGenerationOffset);
+        const auto* generation =
+            reinterpret_cast<const volatile u32*>(base + LoginGenerationOffset);
         const auto* ticket = reinterpret_cast<const volatile char*>(base + LoginTicketOffset);
         const auto* bootstrap_state =
             reinterpret_cast<const volatile u32*>(base + BootstrapStateOffset);
@@ -226,8 +226,7 @@ static void StartLbp3LoginStateWatcher() {
             reinterpret_cast<const volatile u32*>(base + SessionState2Offset);
         const auto* session_state3 =
             reinterpret_cast<const volatile u32*>(base + SessionState3Offset);
-        const auto* session_flag =
-            reinterpret_cast<const volatile u8*>(base + SessionFlagOffset);
+        const auto* session_flag = reinterpret_cast<const volatile u8*>(base + SessionFlagOffset);
 
         u32 previous_state = ~u32{0};
         u32 previous_generation = ~u32{0};
@@ -261,8 +260,7 @@ static void StartLbp3LoginStateWatcher() {
                         break;
                     }
                 }
-                LOG_CRITICAL(Lib_Http,
-                             "LBP3 guest login state: state={} generation={} ticket='{}'",
+                LOG_CRITICAL(Lib_Http, "LBP3 guest login state: state={} generation={} ticket='{}'",
                              current_state, current_generation, ticket_copy);
                 previous_state = current_state;
                 previous_generation = current_generation;
@@ -296,10 +294,10 @@ static void StartLbp3LoginStateWatcher() {
             const u32 current_manager_watchdog = *manager_watchdog;
             const u8 current_manager_success_flag = *manager_success_flag;
             const uintptr_t current_manager_local_gate_pointer = *manager_local_gate_pointer;
-            const u8 current_manager_local_gate = current_manager_local_gate_pointer != 0
-                                                      ? *reinterpret_cast<const volatile u8*>(
-                                                            current_manager_local_gate_pointer)
-                                                      : 0xff;
+            const u8 current_manager_local_gate =
+                current_manager_local_gate_pointer != 0
+                    ? *reinterpret_cast<const volatile u8*>(current_manager_local_gate_pointer)
+                    : 0xff;
             const u8 current_manager_watchdog_gate = *manager_watchdog_gate;
             std::ostringstream manager_changes;
             bool manager_child_changed = false;
@@ -355,8 +353,7 @@ static void StartLbp3LoginStateWatcher() {
                              "LBP3 session state: outer={} substate={} state2={:#x} "
                              "state3={:#x} flag={}",
                              current_session_outer_state, current_session_substate,
-                             current_session_state2, current_session_state3,
-                             current_session_flag);
+                             current_session_state2, current_session_state3, current_session_flag);
                 previous_session_outer_state = current_session_outer_state;
                 previous_session_substate = current_session_substate;
                 previous_session_state2 = current_session_state2;
@@ -1447,15 +1444,16 @@ int PS4_SYSV_ABI sceHttpCreateConnection(int tmplId, const char* serverName, con
 
     // Forçar HTTP simples quando o jogo tentar usar HTTPS na porta 443
     if (scheme && (std::string(scheme) == "HTTPS" || port == 443)) {
-        LOG_WARN(Lib_Http, "Redirecionando HTTPS para HTTP para evitar crash SSL em: {}", serverName ? serverName : "");
+        LOG_WARN(Lib_Http, "Redirecionando HTTPS para HTTP para evitar crash SSL em: {}",
+                 serverName ? serverName : "");
         scheme = "HTTP";
         port = 80; // Altera a porta HTTPS (443) para a porta HTTP padrão (80)
     }
 
-    LOG_INFO(Lib_Http, "called tmplId={}, serverName={}, scheme={}, port={}, isEnableKeepalive={}", 
-             tmplId, serverName ? serverName : "null", scheme ? scheme : "null", port, isEnableKeepalive);
-    
-    
+    LOG_INFO(Lib_Http, "called tmplId={}, serverName={}, scheme={}, port={}, isEnableKeepalive={}",
+             tmplId, serverName ? serverName : "null", scheme ? scheme : "null", port,
+             isEnableKeepalive);
+
     LOG_INFO(Lib_Http, "called tmplId={}, serverName={}, scheme={}, port={}, isEnableKeepalive={}",
              tmplId, serverName ? serverName : "(null)", scheme ? scheme : "(null)", port,
              isEnableKeepalive);
@@ -1864,9 +1862,8 @@ int PS4_SYSV_ABI sceHttpSendRequest(int reqId, const void* postData, u64 size) {
             plan.body.assign(static_cast<const u8*>(postData),
                              static_cast<const u8*>(postData) + size);
             if (plan.path.contains("/LITTLEBIGPLANETPS3_XML/match")) {
-                Net::Lbp3OnlineBridge::ObserveMatchingRequest(
-                    std::string_view{reinterpret_cast<const char*>(plan.body.data()),
-                                     plan.body.size()});
+                Net::Lbp3OnlineBridge::ObserveMatchingRequest(std::string_view{
+                    reinterpret_cast<const char*>(plan.body.data()), plan.body.size()});
             }
         }
     }

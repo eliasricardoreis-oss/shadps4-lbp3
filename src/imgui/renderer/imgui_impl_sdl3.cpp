@@ -3,8 +3,8 @@
 
 // Based on imgui_impl_sdl3.cpp from Dear ImGui repository
 
-#include <imgui.h>
 #include <cstdio>
+#include <imgui.h>
 #include "core/debug_state.h"
 #include "core/emulator_settings.h"
 #include "core/memory.h"
@@ -748,7 +748,8 @@ static void UpdateGamepads() {
         for (int i = 0; i < count; ++i) {
             if (SDL_Gamepad* gamepad = SDL_OpenGamepad(devices[i])) {
                 bd->gamepads.push_back(gamepad);
-                if (bd->gamepad_mode == ImGui_ImplSDL3_GamepadMode_AutoFirst) break;
+                if (bd->gamepad_mode == ImGui_ImplSDL3_GamepadMode_AutoFirst)
+                    break;
             }
         }
         SDL_free(devices);
