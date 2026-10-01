@@ -25,27 +25,40 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  reuse:
+reuse:
     runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
     - uses: actions/checkout@v6
-    - uses: fsfe/reuse-action@v6
+    - name: Run REUSE lint
+      uses: fsfe/reuse-action@v6
 
   clang-format:
     runs-on: ubuntu-24.04
     continue-on-error: true
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-    - name: Install
+        ref: ${{ github.head_ref }}
+
+    - name: Install clang-format
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         sudo add-apt-repository 'deb http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main'
         sudo apt update
-        sudo apt install clang-format-19
-    - name: Build
+        sudo apt install -y clang-format-19
+
+    - name: Run clang-format fix
+      run: |
+        find src/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format-19 -i
+
+    - name: Auto-commit formatting fixes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: 'style: aplicar formatação clang-format automaticamente'
       env:
         COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
       run: ./.github/workflows/scripts/clang-format.sh
