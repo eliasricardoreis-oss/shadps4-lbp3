@@ -1444,8 +1444,8 @@ int PS4_SYSV_ABI sceHttpCreateConnection(int tmplId, const char* serverName, con
 
     // Forçar HTTP simples quando o jogo tentar usar HTTPS na porta 443
     if (scheme && (std::string(scheme) == "HTTPS" || port == 443)) {
-        LOG_WARNING(Lib_Http, "Redirecionando HTTPS para HTTP para evitar crash SSL em: {}",
-                    serverName);
+        LOG_WARNING(Lib_Http, "Redirecionando HTTPS para HTTP para evitar crash SSL em: {}", 
+            (serverName != nullptr) ? serverName : "");
                  serverName ? serverName : "");
                  scheme = "HTTP";
                  port = 80; // Altera a porta HTTPS (443) para a porta HTTP padrão (80)
