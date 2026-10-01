@@ -1,0 +1,26 @@
+name: Clang Format Auto-Fix
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run clang-format fix
+        uses: DImuthuUpe/clang-format-action@v1.3.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          clang-format-version: '17'
+          check-path: 'src'
+
+      - name: Commit formatting changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'style: aplicar formatação clang-format automaticamente'
