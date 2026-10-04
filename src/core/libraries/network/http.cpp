@@ -1442,22 +1442,10 @@ int PS4_SYSV_ABI sceHttpCookieImport(int libhttpCtxId, const void* buffer, u64 b
 int PS4_SYSV_ABI sceHttpCreateConnection(int tmplId, const char* serverName, const char* scheme,
                                          u16 port, int isEnableKeepalive) {
 
-    // Forçar HTTP simples quando o jogo tentar usar HTTPS na porta 443
-    if (scheme && (std::string(scheme) == "HTTPS" || port == 443)) {
-        LOG_WARNING(Lib_Http, "Redirecionando HTTPS para HTTP para evitar crash SSL em: {}",
-                    serverName ? serverName : "");
-                 serverName ? serverName : "");
-                 scheme = "HTTP";
-                 port = 80; // Altera a porta HTTPS (443) para a porta HTTP padrão (80)
-    }
-
-    LOG_INFO(Lib_Http, "called tmplId={}, serverName={}, scheme={}, port={}, isEnableKeepalive={}",
-             tmplId, serverName ? serverName : "null", scheme ? scheme : "null", port,
-             isEnableKeepalive);
-
     LOG_INFO(Lib_Http, "called tmplId={}, serverName={}, scheme={}, port={}, isEnableKeepalive={}",
              tmplId, serverName ? serverName : "(null)", scheme ? scheme : "(null)", port,
              isEnableKeepalive);
+
     std::lock_guard<std::mutex> lock(g_state.m_mutex);
     if (!g_state.inited) {
         LOG_ERROR(Lib_Http, "Not initialized");
@@ -1472,6 +1460,7 @@ int PS4_SYSV_ABI sceHttpCreateConnection(int tmplId, const char* serverName, con
         LOG_ERROR(Lib_Http, "serverName is null");
         return ORBIS_HTTP_ERROR_INVALID_VALUE;
     }
+
     bool is_secure = false;
     if (int sc = CheckScheme(scheme, is_secure); sc < 0) {
         LOG_ERROR(Lib_Http, "scheme rejected: '{}' -> {:#x}", scheme ? scheme : "(null)", sc);
@@ -1481,9 +1470,11 @@ int PS4_SYSV_ABI sceHttpCreateConnection(int tmplId, const char* serverName, con
     std::string scheme_str = is_secure ? "https" : "http";
     std::string host_str = serverName;
     u16 effective_port = port;
+
     ApplyHostOverride(scheme_str, host_str, effective_port, is_secure);
+
     const int conn_id = ++g_state.next_obj_id;
-    HttpConnection conn;
+    HttpConnection conn{};
     conn.tmpl_id = tmplId;
     conn.scheme = scheme_str;
     conn.hostname = host_str;
@@ -1491,14 +1482,17 @@ int PS4_SYSV_ABI sceHttpCreateConnection(int tmplId, const char* serverName, con
     conn.keep_alive = (isEnableKeepalive != 0);
     conn.is_secure = is_secure;
     conn.url = scheme_str + "://" + host_str + ":" + std::to_string(effective_port);
+
     if (auto tmpl_it = g_state.templates.find(tmplId); tmpl_it != g_state.templates.end()) {
         conn.settings = tmpl_it->second.settings;
         conn.epoll_id = tmpl_it->second.epoll_id;
         conn.epoll_user_arg = tmpl_it->second.epoll_user_arg;
     }
+
     g_state.connections.emplace(conn_id, std::move(conn));
     LOG_INFO(Lib_Http, "created connection connId={} url={}", conn_id,
              g_state.connections[conn_id].url);
+
     return conn_id;
 }
 
