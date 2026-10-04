@@ -623,9 +623,35 @@ int PS4_SYSV_ABI sceNetEpollAbort() {
     return ORBIS_OK;
 }
 
-int PS4_SYSV_ABI sceNetEpollControl(OrbisNetId epollid, OrbisNetEpollFlag op, OrbisNetId id,
-                                    OrbisNetEpollEvent* event) {
-    auto file = FDTable::Instance()->GetEpoll(epollid);
+int PS4_SYSV_ABI sceNetEpollControl(int id, int op, int fd, OrbisNetEpollEvent* event) {
+    LOG_INFO(Lib_Net, "called, epollid = {}, op = {}, id = {}", id, op, fd);
+
+    std::lock_guard<std::mutex> lock(g_net_mutex);
+
+    // 1. Verificar se a estrutura do Epoll existe
+    auto epoll_it = g_epoll_map.find(id);
+    if (epoll_it == g_epoll_map.end()) {
+        LOG_ERROR(Lib_Net, "Invalid epoll id: {}", id);
+        return ORBIS_NET_EBADF;
+    }
+
+    // 2. CORREÇÃO DO CRASH: Verificar se o socket/fd registrado REALMENTE existe
+    if (op == ORBIS_NET_EPOLL_CTL_ADD || op == ORBIS_NET_EPOLL_CTL_MOD) {
+        auto sock_it = g_socket_map.find(fd);
+        if (sock_it == g_socket_map.end()) {
+            LOG_ERROR(Lib_Net, "Attempted epoll control on invalid socket id: {}", fd);
+            return ORBIS_NET_EBADF;
+        }
+    }
+
+    // 3. Garantir que o ponteiro de evento do epoll não seja nulo
+    if ((op == ORBIS_NET_EPOLL_CTL_ADD || op == ORBIS_NET_EPOLL_CTL_MOD) && !event) {
+        LOG_ERROR(Lib_Net, "Null OrbisNetEpollEvent pointer passed to epoll control");
+        return ORBIS_NET_EFAULT;
+    }
+
+    // 4. Execução original do FDTable usando 'id' em vez de 'epollid'
+    auto file = FDTable::Instance()->GetEpoll(id);
     if (!file) {
         *sceNetErrnoLoc() = ORBIS_NET_EBADF;
         return ORBIS_NET_ERROR_EBADF;
