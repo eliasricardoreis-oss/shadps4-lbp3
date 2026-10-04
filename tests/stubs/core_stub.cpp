@@ -10,3 +10,13 @@ Emulator::~Emulator() {}
 void Emulator::Shutdown() {}
 
 } // namespace Core
+
+namespace MemoryPatcher {
+    uint64_t g_eboot_address = 0;
+}
+
+namespace Libraries::Net::Lbp3OnlineBridge {
+    void ObserveMatchingRequest(std::string_view) {
+        // Dummy stub para os testes unitários passarem
+    }
+}
